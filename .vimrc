@@ -24,6 +24,7 @@ set shell=/bin/zsh
 set number " show line numbers
 set showmatch " highlight matching [{()}]
 set lazyredraw " Speed up the macro, lazy redraw http://www.matthewoakley.co.uk/how-to-speed-up-your-macros-in-vim/
+set omnifunc=syntaxcomplete#Complete " Enable omnicompletion
 
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 " => Search 
