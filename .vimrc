@@ -66,6 +66,7 @@ set wrap "Wrap lines
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 " => Custom mappings 
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+let mapleader = ","
 " Move pastetoggle to F3 because guake uses F2
 set pastetoggle=<F3>
 " Toggle numbers line
