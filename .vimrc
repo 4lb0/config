@@ -15,15 +15,26 @@ Plugin 'godlygeek/tabular'
 Plugin 'plasticboy/vim-markdown'
 Plugin 'shawncplus/phpcomplete.vim'
 Plugin 'Lokaltog/vim-easymotion'
+Plugin 'itchyny/lightline.vim'
 
 call vundle#end()            " required
 filetype plugin indent on    " required
 
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+" => Plugins configuration 
+"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+
+" Lightline
+set laststatus=2
+if !has('gui_running')
+    set t_Co=256
+endif
+
+"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 " => IDE configuration 
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 set shell=/bin/zsh 
-set number " show line numbers
+set relativenumber " show relative numbers line
 set showmatch " highlight matching [{()}]
 set lazyredraw " Speed up the macro, lazy redraw http://www.matthewoakley.co.uk/how-to-speed-up-your-macros-in-vim/
 set omnifunc=syntaxcomplete#Complete " Enable omnicompletion
@@ -72,6 +83,6 @@ set wrap "Wrap lines
 let mapleader = ","
 " Move pastetoggle to F3 because guake uses F2
 set pastetoggle=<F3>
-" Toggle numbers line
-nmap <silent> m :set number!<CR>
+" Toggle relative numbers line
+nmap <silent> m :set relativenumber!<CR>
 
