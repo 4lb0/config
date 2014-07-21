@@ -19,6 +19,7 @@ Plugin 'itchyny/lightline.vim'
 Plugin 'altercation/vim-colors-solarized'
 Plugin 'pearofducks/vim-quack-lightline'
 Plugin 'scrooloose/syntastic'
+Plugin 'szw/vim-ctrlspace'
 
 call vundle#end()            " required
 filetype plugin indent on    " required
@@ -37,6 +38,9 @@ syntax enable
 set background=dark
 let g:solarized_termcolors=256
 colorscheme solarized
+" CtrlSpace
+let g:ctrlspace_save_workspace_on_exit=1
+let g:ctrlspace_load_last_workspace_on_start=1
 
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 " => IDE configuration 
