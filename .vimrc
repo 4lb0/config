@@ -92,4 +92,8 @@ let mapleader = ","
 set pastetoggle=<F3>
 " Toggle relative numbers line
 nmap <silent> m :set relativenumber!<CR>
-
+" Fugitive
+nmap <Leader>ga :Gwrite<CR>
+nmap <Leader>gc :Gcommit<CR>
+nmap <Leader>gs :Gstatus<CR>
+nmap <Leader>gd :Gdiff<CR>
