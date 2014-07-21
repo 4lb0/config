@@ -16,6 +16,8 @@ Plugin 'plasticboy/vim-markdown'
 Plugin 'shawncplus/phpcomplete.vim'
 Plugin 'Lokaltog/vim-easymotion'
 Plugin 'itchyny/lightline.vim'
+Plugin 'altercation/vim-colors-solarized'
+Plugin 'pearofducks/vim-quack-lightline'
 
 call vundle#end()            " required
 filetype plugin indent on    " required
@@ -29,6 +31,11 @@ set laststatus=2
 if !has('gui_running')
     set t_Co=256
 endif
+" Solarized
+syntax enable
+set background=dark
+let g:solarized_termcolors=256
+colorscheme solarized
 
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 " => IDE configuration 
