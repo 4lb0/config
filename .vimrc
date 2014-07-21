@@ -18,6 +18,7 @@ Plugin 'Lokaltog/vim-easymotion'
 Plugin 'itchyny/lightline.vim'
 Plugin 'altercation/vim-colors-solarized'
 Plugin 'pearofducks/vim-quack-lightline'
+Plugin 'scrooloose/syntastic'
 
 call vundle#end()            " required
 filetype plugin indent on    " required
