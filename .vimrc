@@ -21,6 +21,7 @@ Plugin 'pearofducks/vim-quack-lightline'
 Plugin 'scrooloose/syntastic'
 Plugin 'szw/vim-ctrlspace'
 Plugin 'skammer/vim-css-color'
+Plugin 'Shutnik/jshint2.vim'
 
 call vundle#end()            " required
 filetype plugin indent on    " required
