@@ -20,6 +20,7 @@ Plugin 'altercation/vim-colors-solarized'
 Plugin 'pearofducks/vim-quack-lightline'
 Plugin 'scrooloose/syntastic'
 Plugin 'szw/vim-ctrlspace'
+Plugin 'skammer/vim-css-color'
 
 call vundle#end()            " required
 filetype plugin indent on    " required
