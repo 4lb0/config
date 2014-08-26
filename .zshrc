@@ -20,7 +20,7 @@ source $ZSH/oh-my-zsh.sh
 
 # User configuration
 
-export PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games"
+export PATH="$PATH:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games"
 
 # Load aliases
 source ~/.bash_aliases
@@ -40,3 +40,5 @@ setopt interactivecomments
 # Terminal is preventing Control+s
 # http://stackoverflow.com/questions/8616843/ctrl-s-is-not-working-as-a-horizontal-split-in-vim-when-using-commandt
 stty -ixon -ixoff
+
+export PATH="$PATH:$HOME/.rvm/bin" # Add RVM to PATH for scripting
