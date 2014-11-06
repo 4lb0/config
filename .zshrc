@@ -41,4 +41,8 @@ setopt interactivecomments
 # http://stackoverflow.com/questions/8616843/ctrl-s-is-not-working-as-a-horizontal-split-in-vim-when-using-commandt
 stty -ixon -ixoff
 
+# Add Syntax Highlighting
+# http://jilles.me/badassify-your-terminal-and-shell/
+source ~/.oh-my-zsh/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh  
+
 export PATH="$PATH:$HOME/.rvm/bin" # Add RVM to PATH for scripting
