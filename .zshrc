@@ -45,4 +45,8 @@ stty -ixon -ixoff
 # http://jilles.me/badassify-your-terminal-and-shell/
 source ~/.oh-my-zsh/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh  
 
+# Add Z - Jump around
+# http://jilles.me/badassify-your-terminal-and-shell/
+. ~/.zsh/z/z.sh
+
 export PATH="$PATH:$HOME/.rvm/bin" # Add RVM to PATH for scripting
