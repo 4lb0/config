@@ -14,7 +14,8 @@ ZSH_THEME="skaro"
 HIST_STAMPS="dd/mm/yyyy"
 
 # Plugins
-plugins=(git)
+# Added autojump http://fendrich.se/blog/2012/09/28/no/
+plugins=(git autojump)
 
 source $ZSH/oh-my-zsh.sh
 
@@ -32,7 +33,6 @@ export TERM=xterm-256color
 # Frequently used paths
 # http://robots.thoughtbot.com/cding-to-frequently-used-directories-in-zsh
 setopt auto_cd
-cdpath=($HOME/workspaces $HOME/workspaces/pragmore/2011/avantrip)
 
 # Turn on # comments
 setopt interactivecomments
