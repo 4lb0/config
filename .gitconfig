@@ -1,0 +1,48 @@
+[user]
+	name = Rodrigo Arce
+	email = albo@pragmore.com
+
+[core]
+	editor = vim
+
+[color]
+    ui = auto
+
+[color "branch"]
+    current = yellow reverse
+    local = yellow
+    remote = green
+
+[color "diff"]
+    meta = yellow bold
+    frag = magenta bold
+    old = red bold
+    new = green bold
+
+[color "status"]
+    added = green
+    changed = yellow
+    untracked = cyan
+
+[alias]
+    st = status
+    ci = commit
+    br = branch
+    co = checkout
+    lg = log -p
+    lol = log --graph --decorate --pretty=format:'%Cred%h%Creset -%C(yellow)%d%Creset %s %Cgreen(%cr) %C(bold blue)<%an>%Creset' --abbrev-commit
+    lola = log --graph --decorate --pretty=format:'%Cred%h%Creset -%C(yellow)%d%Creset %s %Cgreen(%cr) %C(bold blue)<%an>%Creset' --abbrev-commit --all
+    last-month = !git log --author=\"`git config user.name`\" --before={$(date +"%Y-%m-01")} --after={$(date --date='-1 month' +'%Y-%m-01')} --reverse --pretty=format:\"%cd  %h  %s\" --date=short
+    undo-commit = !git reset --soft 'HEAD^'
+
+[credential]
+	helper = cache --timeout=3600000
+
+[diff]
+	tool = meld
+[difftool]
+    prompt = false
+[difftool "meld"]
+	cmd = /home/albo/meld_diff.py
+[push]
+	default = simple
