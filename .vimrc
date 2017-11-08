@@ -2,8 +2,6 @@
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 " => Vundle 
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-set nocompatible              " be iMproved, required
-filetype off                  " required
 
 set rtp+=~/.vim/bundle/Vundle.vim
 call vundle#begin()
@@ -97,9 +95,9 @@ let mapleader = ","
 " Move pastetoggle to F3 because guake uses F2
 set pastetoggle=<F3>
 " Toggle relative numbers line
-nmap <silent> m :set relativenumber!<CR>
+nnoremap <silent> m :set relativenumber!<CR>
 " Fugitive
-nmap <Leader>ga :Gwrite<CR>
-nmap <Leader>gc :Gcommit<CR>
-nmap <Leader>gs :Gstatus<CR>
-nmap <Leader>gd :Gdiff<CR>
+nnoremap <Leader>ga :Gwrite<CR>
+nnoremap <Leader>gc :Gcommit<CR>
+nnoremap <Leader>gs :Gstatus<CR>
+nnoremap <Leader>gd :Gdiff<CR>
