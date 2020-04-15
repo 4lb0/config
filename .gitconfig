@@ -34,6 +34,7 @@
     lola = log --graph --decorate --pretty=format:'%Cred%h%Creset -%C(yellow)%d%Creset %s %Cgreen(%cr) %C(bold blue)<%an>%Creset' --abbrev-commit --all
     last-month = !git log --author=\"`git config user.name`\" --before={$(date +"%Y-%m-01")} --after={$(date --date='-1 month' +'%Y-%m-01')} --reverse --pretty=format:\"%cd  %h  %s\" --date=short
     undo-commit = !git reset --soft 'HEAD^'
+    pr = pull --rebase
 
 [credential]
 	helper = cache --timeout=3600000

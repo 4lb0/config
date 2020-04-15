@@ -2,6 +2,9 @@
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 " => Vundle 
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+set nocompatible              " be iMproved, required
+set hidden
+filetype off                  " required
 
 set rtp+=~/.vim/bundle/Vundle.vim
 call vundle#begin()
@@ -16,10 +19,10 @@ Plugin 'Lokaltog/vim-easymotion'
 Plugin 'itchyny/lightline.vim'
 Plugin 'altercation/vim-colors-solarized'
 Plugin 'pearofducks/vim-quack-lightline'
-Plugin 'scrooloose/syntastic'
 Plugin 'szw/vim-ctrlspace'
 Plugin 'skammer/vim-css-color'
-Plugin 'Shutnik/jshint2.vim'
+Plugin 'leafgarland/typescript-vim'
+Plugin 'dense-analysis/ale'
 
 call vundle#end()            " required
 filetype plugin indent on    " required
@@ -96,8 +99,15 @@ let mapleader = ","
 set pastetoggle=<F3>
 " Toggle relative numbers line
 nnoremap <silent> m :set relativenumber!<CR>
-" Fugitive
-nnoremap <Leader>ga :Gwrite<CR>
-nnoremap <Leader>gc :Gcommit<CR>
-nnoremap <Leader>gs :Gstatus<CR>
-nnoremap <Leader>gd :Gdiff<CR>
+nmap <Leader>ga :Gwrite<CR>
+nmap <Leader>gc :Gcommit<CR>
+nmap <Leader>gs :Gstatus<CR>
+nmap <Leader>gd :Gdiff<CR>
+
+"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+" => JS Standard https://standardjs.com/#vim
+"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+let g:ale_linters = {'javascript': ['standard']}
+let g:ale_fixers = {'javascript': ['standard']}
+let g:ale_lint_on_save = 1
+let g:ale_fix_on_save = 1
