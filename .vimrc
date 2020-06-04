@@ -99,10 +99,6 @@ let mapleader = ","
 set pastetoggle=<F3>
 " Toggle relative numbers line
 nnoremap <silent> m :set relativenumber!<CR>
-nmap <Leader>ga :Gwrite<CR>
-nmap <Leader>gc :Gcommit<CR>
-nmap <Leader>gs :Gstatus<CR>
-nmap <Leader>gd :Gdiff<CR>
 
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 " => JS Standard https://standardjs.com/#vim
