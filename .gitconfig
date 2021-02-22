@@ -35,6 +35,7 @@
     last-month = !git log --author=\"`git config user.name`\" --before={$(date +"%Y-%m-01")} --after={$(date --date='-1 month' +'%Y-%m-01')} --reverse --pretty=format:\"%cd  %h  %s\" --date=short
     undo-commit = !git reset --soft 'HEAD^'
     pr = pull --rebase
+	pa = !git remote | xargs -L1 git push --all
 
 [credential]
 	helper = cache --timeout=3600000

@@ -23,6 +23,7 @@ Plugin 'szw/vim-ctrlspace'
 Plugin 'skammer/vim-css-color'
 Plugin 'leafgarland/typescript-vim'
 Plugin 'dense-analysis/ale'
+Plugin 'nelsyeung/twig.vim'
 
 call vundle#end()            " required
 filetype plugin indent on    " required
@@ -74,7 +75,6 @@ set wildmenu  " visual autocomplete for command menu
 
 autocmd BufNewFile,BufRead *.json set filetype=javascript
 autocmd BufNewFile,BufRead *.md set filetype=markdown
-autocmd BufNewFile,BufRead *.twig set filetype=html
 autocmd BufNewFile,BufRead *.phtml set filetype=php
 
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
@@ -90,6 +90,7 @@ set tw=500
 set autoindent
 set smartindent
 set wrap "Wrap lines
+set nofoldenable " Prevent folding
 
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 " => Custom mappings 
