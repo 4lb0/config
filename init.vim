@@ -46,8 +46,8 @@ set rtp+=~/.vim/bundle/vim-project/
 let g:project_enable_welcome = 1
 
 call project#rc("~")
-source ~/.vim_projects
 File '~/TODO.md', 'todo'
+source ~/.vim_projects
 
 " Fix bug on NeoVim
 au VimEnter *
