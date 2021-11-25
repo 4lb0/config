@@ -76,6 +76,7 @@ set wildmenu  " visual autocomplete for command menu
 autocmd BufNewFile,BufRead *.json set filetype=javascript
 autocmd BufNewFile,BufRead *.md set filetype=markdown
 autocmd BufNewFile,BufRead *.phtml set filetype=php
+autocmd BufNewFile,BufRead *.js,*.html,*.css,*.scss setlocal shiftwidth=2 tabstop=2
 
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 " => Text, tab and indent related
@@ -100,6 +101,9 @@ let mapleader = ","
 set pastetoggle=<F3>
 " Toggle relative numbers line
 nnoremap <silent> m :set relativenumber!<CR>
+
+" TODO mappings, yes this maybe be a function later
+nmap <silent> tt :.s/^\([✘✔*-] \)\?/\=submatch(0) == "✘ " ? "✔ " : "✘ "/g<CR>:let @/ = ""<CR>
 
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 " => JS Standard https://standardjs.com/#vim

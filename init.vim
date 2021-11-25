@@ -10,13 +10,16 @@ Plug 'overcache/NeoSolarized'
 " IDE
 Plug 'junegunn/fzf', { 'do': { -> fzf#install() } }
 Plug 'junegunn/fzf.vim'
-Plug 'amiorin/vim-project'
 Plug 'zivyangll/git-blame.vim'
 Plug 'dense-analysis/ale'
 Plug 'tpope/vim-commentary'
+Plug 'skanehira/docker-compose.vim'
+Plug 'tpope/vim-fugitive'
+Plug 'leafgarland/typescript-vim'
 
 " Type related
-Plug 'nelsyeung/twig.vim'
+Plug 'nelsyeung/twig.vim', { 'for': 'twig' }
+Plug 'junegunn/goyo.vim', { 'for': 'markdown' }
 
 " Initialize plugin system
 call plug#end()
@@ -40,20 +43,7 @@ set relativenumber " show relative numbers line
 set showmatch " highlight matching [{()}]
 set lazyredraw " Speed up the macro, lazy redraw http://www.matthewoakley.co.uk/how-to-speed-up-your-macros-in-vim/
 set omnifunc=syntaxcomplete#Complete " Enable omnicompletion
-
-" vim-project
-set rtp+=~/.vim/bundle/vim-project/
-let g:project_enable_welcome = 1
-
-call project#rc("~")
-File '~/TODO.md', 'todo'
-source ~/.vim_projects
-
-" Fix bug on NeoVim
-au VimEnter *
-  \ if !argc() && (line2byte('$') == -1) && (v:progname =~? '^[gmn]\=vim\%[\.exe]$') |
-  \   call project#config#welcome() |
-  \ endif
+let php_htmlInStrings = 1
 
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 " => Search 
@@ -74,9 +64,9 @@ set nowb
 set noswapfile
 set wildmenu  " visual autocomplete for command menu
 
-autocmd BufNewFile,BufRead *.json set filetype=javascript
 autocmd BufNewFile,BufRead *.md set filetype=markdown
 autocmd BufNewFile,BufRead *.phtml set filetype=php
+autocmd BufNewFile,BufRead *.js,*.html,*.css,*.scss,*.sh,*.json setlocal shiftwidth=2 tabstop=2
 
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 " => Text, tab and indent related
@@ -111,6 +101,19 @@ nnoremap <C-Space> :Buffers<CR>
 nnoremap <leader>l :Lines<CR>
 nnoremap <leader>ag :Ag! <C-R><C-W><CR>
 nnoremap <leader>m :History<CR>
+nnoremap <silent> <leader>w :Welcome<CR>
+nnoremap <silent> <leader>g :Goyo<CR>
+
+" TODO mappings, yes this maybe be a function later
+let g:light_todo_list_pending = "✘"
+let g:light_todo_list_done = "✔"
+
+nnoremap <silent> tt :.s/^\([✘✔*-] \)\?/\=submatch(0)=="✘ "?"✔ ":"✘ "/g<bar>let @/=""<cr>
+vnoremap <silent> tt :s/\_^\([✘✔*-] \)\?/\=submatch(1)=="✘ "? "✔ ":"✘ "/g<bar>let @/=""<cr>
+" Add td as todo done
+" Add tp as todo pending 
+" No add todo on empty string
+" 2tt<arrow> motion keys - https://vi.stackexchange.com/questions/5495/mapping-with-motion
 
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 " => JS Standard https://standardjs.com/#vim
@@ -118,4 +121,4 @@ nnoremap <leader>m :History<CR>
 let g:ale_linters = {'javascript': ['standard']}
 let g:ale_fixers = {'javascript': ['standard']}
 let g:ale_lint_on_save = 1
-let g:ale_fix_on_save = 1
+let g:ale_fix_on_save = 0

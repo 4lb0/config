@@ -36,6 +36,7 @@
     undo-commit = !git reset --soft 'HEAD^'
     pr = pull --rebase
 	pa = !git remote | xargs -L1 git push --all
+    deploy = push prod
 
 [credential]
 	helper = cache --timeout=3600000
@@ -48,3 +49,5 @@
 	cmd = /home/albo/meld_diff.py
 [push]
 	default = simple
+[init]
+	defaultBranch = main
