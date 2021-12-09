@@ -26,17 +26,16 @@
 
 [alias]
     st = status
-    ci = commit
+    c = "!git add . && git commit -m \"$1\" #"
     br = branch
     co = checkout
-    lg = log -p
     lol = log --graph --decorate --pretty=format:'%Cred%h%Creset -%C(yellow)%d%Creset %s %Cgreen(%cr) %C(bold blue)<%an>%Creset' --abbrev-commit
-    lola = log --graph --decorate --pretty=format:'%Cred%h%Creset -%C(yellow)%d%Creset %s %Cgreen(%cr) %C(bold blue)<%an>%Creset' --abbrev-commit --all
-    last-month = !git log --author=\"`git config user.name`\" --before={$(date +"%Y-%m-01")} --after={$(date --date='-1 month' +'%Y-%m-01')} --reverse --pretty=format:\"%cd  %h  %s\" --date=short
     undo-commit = !git reset --soft 'HEAD^'
     pr = pull --rebase
 	pa = !git remote | xargs -L1 git push --all
-    deploy = push prod
+    deploy = push -q prod
+    force-deploy = !NUBE_TAG_FORCE="force_deploy_$(date "+%Y%m%d_%H%g%S")" && git tag $NUBE_TAG_FORCE && git push -q prod $NUBE_TAG_FORCE
+    test-deploy = push -q test 
 
 [credential]
 	helper = cache --timeout=3600000

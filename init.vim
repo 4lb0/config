@@ -5,7 +5,7 @@ call plug#begin('~/.vim/plugged')
 " Visual plugins
 Plug 'itchyny/lightline.vim'
 Plug 'pearofducks/vim-quack-lightline'
-Plug 'overcache/NeoSolarized'
+Plug 'Mofiqul/dracula.nvim'
 
 " IDE
 Plug 'junegunn/fzf', { 'do': { -> fzf#install() } }
@@ -34,6 +34,8 @@ if !has('gui_running')
     set t_Co=256
 endif
 syntax enable
+
+colorscheme dracula
 
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 " => IDE configuration 
@@ -66,7 +68,7 @@ set wildmenu  " visual autocomplete for command menu
 
 autocmd BufNewFile,BufRead *.md set filetype=markdown
 autocmd BufNewFile,BufRead *.phtml set filetype=php
-autocmd BufNewFile,BufRead *.js,*.html,*.css,*.scss,*.sh,*.json setlocal shiftwidth=2 tabstop=2
+autocmd BufNewFile,BufRead *.js,*.html,*.css,*.scss,*.sh,*.json,*.vue setlocal shiftwidth=2 tabstop=2
 
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 " => Text, tab and indent related
