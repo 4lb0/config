@@ -1,9 +1,9 @@
 [user]
-	name = Rodrigo “Albo” Arce
-	email = albo@pragmore.com
+  name = Rodrigo “Albo” Arce
+  email = albo@pragmore.com
 
 [core]
-	editor = nvim
+  editor = nvim
 
 [color]
   ui = auto
@@ -28,17 +28,17 @@
   deploy-f = !NUBE_TAG_FORCE="force_deploy_$(date "+%Y%m%d_%H%g%S")" && git tag $NUBE_TAG_FORCE && git push -q prod $NUBE_TAG_FORCE
 
 [credential]
-	helper = cache --timeout=3600000
+  helper = cache --timeout=3600000
 
 [diff]
-	tool = meld
+  tool = meld
 
 [difftool]
   prompt = false
 
 [push]
-	default = current
+  default = current
 
 [init]
   # Useful for init local repositories for github
-	defaultBranch = main
+  defaultBranch = main
