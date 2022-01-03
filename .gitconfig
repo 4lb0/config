@@ -1,52 +1,44 @@
 [user]
-	name = Rodrigo Arce
+	name = Rodrigo “Albo” Arce
 	email = albo@pragmore.com
 
 [core]
-	editor = vim
+	editor = nvim
 
 [color]
-    ui = auto
-
-[color "branch"]
-    current = yellow reverse
-    local = yellow
-    remote = green
-
-[color "diff"]
-    meta = yellow bold
-    frag = magenta bold
-    old = red bold
-    new = green bold
-
-[color "status"]
-    added = green
-    changed = yellow
-    untracked = cyan
+  ui = auto
 
 [alias]
-    st = status
-    c = "!git add . && git commit -m \"$1\" #"
-    br = branch
-    co = checkout
-    lol = log --graph --decorate --pretty=format:'%Cred%h%Creset -%C(yellow)%d%Creset %s %Cgreen(%cr) %C(bold blue)<%an>%Creset' --abbrev-commit
-    undo-commit = !git reset --soft 'HEAD^'
-    pr = pull --rebase
-	pa = !git remote | xargs -L1 git push --all
-    deploy = push -q prod
-    force-deploy = !NUBE_TAG_FORCE="force_deploy_$(date "+%Y%m%d_%H%g%S")" && git tag $NUBE_TAG_FORCE && git push -q prod $NUBE_TAG_FORCE
-    test-deploy = push -q test 
+  st = status
+  # Git add and git commit shortcut, usage: git c "Message"
+  c = "!git add . && git commit -m \"$1\" #"
+  br = branch
+  co = checkout
+  # Pretty log
+  l = log --graph --decorate --pretty=format:'%Cred%h%Creset -%C(yellow)%d%Creset %s %Cgreen(%cr) %C(bold blue)<%an>%Creset' --abbrev-commit
+  # Undo last commit
+  undo = !git reset --soft 'HEAD^'
+  # Always pull with rebase
+  pr = pull --rebase
+  # Git push all shortcut, useful when multiple remotes
+  pa = !git remote | xargs -L1 git push --all
+
+  # nube.pragmore.com cloud shortcuts
+  deploy = push -q prod
+  deploy-f = !NUBE_TAG_FORCE="force_deploy_$(date "+%Y%m%d_%H%g%S")" && git tag $NUBE_TAG_FORCE && git push -q prod $NUBE_TAG_FORCE
 
 [credential]
 	helper = cache --timeout=3600000
 
 [diff]
 	tool = meld
+
 [difftool]
-    prompt = false
-[difftool "meld"]
-	cmd = /home/albo/meld_diff.py
+  prompt = false
+
 [push]
-	default = simple
+	default = current
+
 [init]
+  # Useful for init local repositories for github
 	defaultBranch = main
