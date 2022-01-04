@@ -18,6 +18,7 @@ Plug 'neoclide/coc.nvim', {'branch': 'release'}
 " Type related
 Plug 'leafgarland/typescript-vim', { 'for': 'typescript' }
 Plug 'nelsyeung/twig.vim', { 'for': 'twig' }
+Plug 'cespare/vim-toml', { 'for': 'toml', 'branch': 'main' }
 
 " Initialize plugin system
 call plug#end()
