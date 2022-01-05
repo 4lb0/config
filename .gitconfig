@@ -17,7 +17,7 @@
   # Pretty log
   l = log --graph --decorate --pretty=format:'%Cred%h%Creset -%C(yellow)%d%Creset %s %Cgreen(%cr) %C(bold blue)<%an>%Creset' --abbrev-commit
   # Undo last commit
-  undo = !git reset --soft 'HEAD^'
+  undo = reset --soft HEAD~
   # Always pull with rebase
   pr = pull --rebase
   # Git push all shortcut, useful when multiple remotes
