@@ -2,6 +2,7 @@
   name = Rodrigo “Albo” Arce
   email = albo@pragmore.com
 
+
 [core]
   editor = nvim
 
@@ -42,3 +43,6 @@
 [init]
   # Useful for init local repositories for github
   defaultBranch = main
+
+[pull]
+	rebase = true
