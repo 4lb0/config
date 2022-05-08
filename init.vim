@@ -1,4 +1,6 @@
-set termguicolors
+if !$TERM_PROGRAM =~ "Apple_Terminal"
+  set termguicolors
+endif
 
 call plug#begin('~/.vim/plugged')
 
@@ -34,7 +36,10 @@ if !has('gui_running')
 endif
 syntax enable
 
-colorscheme dracula
+if !$TERM_PROGRAM =~ "Apple_Terminal"
+  colorscheme dracula
+endif
+
 
 " CoC
 

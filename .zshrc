@@ -2,10 +2,13 @@
 # export PATH=$HOME/bin:/usr/local/bin:$PATH
 
 NPM_PACKAGES="$HOME/.npm_packages"
-export PATH=$HOME/bin:$(composer global config bin-dir --absolute --quiet):/usr/local/bin:$NPM_PACKAGES/bin:$PATH
+export PATH=$HOME/bin:/usr/local/bin:$NPM_PACKAGES/bin:$PATH
+if type "composer" > /dev/null; then
+  composer && export PATH=$(composer global config bin-dir --absolute --quiet):$PATH
+fi
 
 # Path to your oh-my-zsh installation.
-export ZSH="/home/albo/.oh-my-zsh"
+export ZSH="$HOME/.oh-my-zsh"
 
 # Set name of the theme to load --- if set to "random", it will
 # load a random theme each time oh-my-zsh is loaded, in which case,
@@ -127,7 +130,7 @@ fi
 # alias ohmyzsh="mate ~/.oh-my-zsh"
 #
 alias alison="cd /mnt/backup/Apps/alison-desktop-2.0.5 && ./start-alison.sh && cd -"
-alias t="nvim /home/albo/TODO.md"
+alias t="nvim $HOME/TODO.md"
 alias css.br="npm run css-min > /dev/null && cp dist/*.css . && brotli -f *.css && ls -l *.css.br && echo '' && ll *.css.br && rm *.css && rm *.br"
 alias css.gz="npm run css-min > /dev/null && cp dist/*.css . && gzip --best *.css && ls -l *.css.gz && echo '' && ll *.css.gz && rm *.gz"
 
