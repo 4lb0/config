@@ -23,6 +23,7 @@
   pr = pull --rebase
   # Git push all shortcut, useful when multiple remotes
   pa = !git remote | xargs -L1 git push --all
+  dt = difftool
 
   # nube.pragmore.com cloud shortcuts
   deploy = push -q prod
@@ -32,10 +33,16 @@
   helper = cache --timeout=3600000
 
 [diff]
-  tool = meld
+  tool = difftastic
 
 [difftool]
   prompt = false
+
+[difftool "difftastic"]
+  cmd = difft "$LOCAL" "$REMOTE"
+
+[pager]
+  difftool = true
 
 [push]
   default = current

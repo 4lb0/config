@@ -21,6 +21,7 @@ Plug 'neoclide/coc.nvim', {'branch': 'release'}
 Plug 'leafgarland/typescript-vim', { 'for': 'typescript' }
 Plug 'nelsyeung/twig.vim', { 'for': 'twig' }
 Plug 'cespare/vim-toml', { 'for': 'toml', 'branch': 'main' }
+Plug 'jfecher/vale.vim', { 'for': 'vale' }
 
 " Initialize plugin system
 call plug#end()
@@ -156,7 +157,11 @@ vnoremap <silent> tt :s/\_^\([✘✔*-] \)\?/\=submatch(1)=="✘ "? "✔ ":"✘ 
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 " => JS Standard https://standardjs.com/#vim
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-let g:ale_linters = {'javascript': ['standard']}
-let g:ale_fixers = {'javascript': ['standard']}
+let g:ale_linters = {'javascript': ['prettier', 'standard'], 'html': ['prettier', 'tidy'], 'typescript': ['prettier', 'tslint']}
+let g:ale_fixers = {'javascript': ['prettier', 'standard'], 'html': ['prettier', 'tidy'], 'typescript': ['prettier', 'tslint']}
 let g:ale_lint_on_save = 1
 let g:ale_fix_on_save = 0
+
+let g:ale_typescript_tslint_use_global = 0
+
+nnoremap <silent> ff :ALEFix<CR>
