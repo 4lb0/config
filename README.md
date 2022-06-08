@@ -7,6 +7,7 @@ My local setup.
 * oh-my-zsh
 * neovim 
 * git
+* fzf
 
 Tested on Ubuntu and iOS.
 
