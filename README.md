@@ -1,10 +1,31 @@
 Config
 ======
 
-My local laptop configuration.
+My local setup. 
 
-I use latest Ubuntu LTS, zsh, neovim and git. Tmux and vim are deprecated.
+* zsh
+* oh-my-zsh
+* neovim 
+* git
 
-I try to keep the comments as clean as posible but this is mainly use it as a backup.
+Tested on Ubuntu and iOS.
 
-Font used: [Cascadia Code PL Regular 16](https://github.com/microsoft/cascadia-code)
+Setup
+-----
+
+```
+git clone git@github.com:4lb0/config.git
+cd config
+./install.sh
+```
+
+Theme
+-----
+
+[Dracula](https://draculatheme.com)
+
+Font
+----
+
+[Cascadia Code PL Regular 16](https://github.com/microsoft/cascadia-code)
+
