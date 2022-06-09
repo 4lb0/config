@@ -2,11 +2,11 @@ export NPM_PACKAGES="$HOME/.npm_packages"
 export DENO_INSTALL="$HOME/.deno"
 export SOLANA_INSTALL="$HOME/.local/share/solana/install/active_release/bin"
 export RUBY_LOCAL="$HOME/.gem/ruby/2.7.0/bin"
-export ANDROID_SDK="$HOME/Android/Sdk"
+export ANDROID_SDK_ROOT="$HOME/Android/Sdk"
 export YARN_BIN="$HOME/.yarn/bin"
 export YARN_MODULES_BIN="$HOME/.config/yarn/global/node_modules/.bin"
 
-export PATH=$HOME/bin:/usr/local/bin:$NPM_PACKAGES/bin:$RUBY_LOCAL:$ANDROID_SDK/platform-tools:$DENO_INSTALL:$SOLANA_INSTALL:$YARN_BIN:$YARN_MODULES_BIN:$PATH
+export PATH=$HOME/bin:/usr/local/bin:$NPM_PACKAGES/bin:$RUBY_LOCAL:$ANDROID_SDK_ROOT/emulator:$ANDROID_SDK_ROOT/platform-tools:$DENO_INSTALL:$SOLANA_INSTALL:$YARN_BIN:$YARN_MODULES_BIN:$PATH
 
 if type "composer" > /dev/null; then
   export PATH=$(composer global config bin-dir --absolute --quiet):$PATH
