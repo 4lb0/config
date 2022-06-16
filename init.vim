@@ -22,6 +22,7 @@ Plug 'leafgarland/typescript-vim', { 'for': 'typescript' }
 Plug 'nelsyeung/twig.vim', { 'for': 'twig' }
 Plug 'cespare/vim-toml', { 'for': 'toml', 'branch': 'main' }
 Plug 'jfecher/vale.vim', { 'for': 'vale' }
+Plug 'bakpakin/janet.vim', { 'for': 'janet' }
 
 " Initialize plugin system
 call plug#end()
