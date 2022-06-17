@@ -5,8 +5,9 @@ export RUBY_LOCAL="$HOME/.gem/ruby/2.7.0/bin"
 export ANDROID_SDK_ROOT="$HOME/Android/Sdk"
 export YARN_BIN="$HOME/.yarn/bin"
 export YARN_MODULES_BIN="$HOME/.config/yarn/global/node_modules/.bin"
+export JAVA_HOME=$(update-alternatives --query java | grep Value | awk 'match($2, /\/usr\/lib\/jvm\/[^\/]+\//) {print substr($2, RSTART, RLENGTH)}')
 
-export PATH=$HOME/bin:/usr/local/bin:$NPM_PACKAGES/bin:$RUBY_LOCAL:$ANDROID_SDK_ROOT/emulator:$ANDROID_SDK_ROOT/platform-tools:$DENO_INSTALL:$SOLANA_INSTALL:$YARN_BIN:$YARN_MODULES_BIN:$PATH
+export PATH=$HOME/bin:/usr/local/bin:$NPM_PACKAGES/bin:$RUBY_LOCAL:$ANDROID_SDK_ROOT/emulator:$ANDROID_SDK_ROOT/platform-tools:$DENO_INSTALL:$SOLANA_INSTALL:$YARN_BIN:$YARN_MODULES_BIN:$JAVA_HOME:$PATH
 
 if type "composer" > /dev/null; then
   export PATH=$(composer global config bin-dir --absolute --quiet):$PATH
@@ -82,4 +83,8 @@ function visit
 {
   curl -kLs $1 | highlight --syntax html -O xterm256 | less
 }
+
+
+# Generated for envman. Do not edit.
+[ -s "$HOME/.config/envman/load.sh" ] && source "$HOME/.config/envman/load.sh"
 
