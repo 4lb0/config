@@ -13,6 +13,11 @@ if type "composer" > /dev/null; then
   export PATH=$(composer global config bin-dir --absolute --quiet):$PATH
 fi
 
+export PYENV_ROOT="$HOME/.pyenv"
+command -v pyenv >/dev/null || export PATH="$PYENV_ROOT/bin:$PATH"
+eval "$(pyenv init -)"
+eval "$(pyenv virtualenv-init -)"
+
 # NVM setup
 export NVM_DIR="$HOME/.nvm"
 [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh" # This loads nvm
@@ -76,7 +81,7 @@ alias t="nvim $HOME/TODO.md"
 alias css.br="npm run css-min > /dev/null && cp dist/*.css . && brotli -f *.css && ls -l *.css.br && echo '' && ll *.css.br && rm *.css && rm *.br"
 alias css.gz="npm run css-min > /dev/null && cp dist/*.css . && gzip --best *.css && ls -l *.css.gz && echo '' && ll *.css.gz && rm *.gz"
 alias ag="ag --ignore \"*.bundle\" -i"
-alias upd="sudo apt update && sudo apt dist-upgrade -y && sudo apt autoremove -y"
+alias upd="sudo apt update && sudo apt dist-upgrade -y && sudo apt autoremove -y && sudo snap refresh"
 alias v="nvim"
 
 function visit
