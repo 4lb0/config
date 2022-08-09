@@ -38,10 +38,10 @@ if !has('gui_running')
 endif
 syntax enable
 
-if !$TERM_PROGRAM =~ "Apple_Terminal"
-  colorscheme dracula
-endif
-
+packadd! dracula_pro
+syntax enable
+let g:dracula_colorterm = 0
+colorscheme dracula_pro
 
 " CoC
 
