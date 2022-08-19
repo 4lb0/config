@@ -77,12 +77,17 @@ fi
 # FZF Dracula Theme
 export FZF_DEFAULT_OPTS='--color=fg:#f8f8f2,bg:#282a36,hl:#bd93f9 --color=fg+:#f8f8f2,bg+:#44475a,hl+:#bd93f9 --color=info:#ffb86c,prompt:#50fa7b,pointer:#ff79c6 --color=marker:#ff79c6,spinner:#ffb86c,header:#6272a4'
 
+# Disable docker-compose suggestion https://github.com/docker/scan-cli-plugin/issues/149
+export DOCKER_SCAN_SUGGEST=false
+
 alias t="nvim $HOME/TODO.md"
 alias css.br="npm run css-min > /dev/null && cp dist/*.css . && brotli -f *.css && ls -l *.css.br && echo '' && ll *.css.br && rm *.css && rm *.br"
 alias css.gz="npm run css-min > /dev/null && cp dist/*.css . && gzip --best *.css && ls -l *.css.gz && echo '' && ll *.css.gz && rm *.gz"
 alias ag="ag --ignore \"*.bundle\" -i"
 alias upd="sudo apt update && sudo apt dist-upgrade -y && sudo apt autoremove -y && sudo snap refresh"
 alias v="nvim"
+alias dkb="docker-compose build"
+alias dku="docker-compose up"
 
 function visit
 {
