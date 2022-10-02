@@ -6,8 +6,6 @@ call plug#begin('~/.vim/plugged')
 
 " Visual plugins
 Plug 'itchyny/lightline.vim'
-Plug 'pearofducks/vim-quack-lightline'
-Plug 'Mofiqul/dracula.nvim'
 
 " IDE
 Plug 'junegunn/fzf', { 'do': { -> fzf#install() } }
@@ -24,6 +22,7 @@ Plug 'nelsyeung/twig.vim', { 'for': 'twig' }
 Plug 'cespare/vim-toml', { 'for': 'toml', 'branch': 'main' }
 Plug 'jfecher/vale.vim', { 'for': 'vale' }
 Plug 'bakpakin/janet.vim', { 'for': 'janet' }
+Plug 'lluchs/vim-wren', { 'for': 'wren' }
 
 " Initialize plugin system
 call plug#end()
@@ -155,8 +154,18 @@ vnoremap <silent> tt :s/\_^\([✘✔*-] \)\?/\=submatch(1)=="✘ "? "✔ ":"✘ 
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 " => JS Standard https://standardjs.com/#vim
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-let g:ale_linters = {'javascript': ['prettier', 'standard'], 'html': ['prettier', 'tidy'], 'typescript': ['prettier', 'tslint']}
-let g:ale_fixers = {'javascript': ['prettier', 'standard'], 'html': ['prettier', 'tidy'], 'typescript': ['prettier', 'tslint']}
+let g:ale_linters = {
+\  'javascript': ['prettier', 'standard'],
+\  'html': ['prettier', 'tidy'],
+\  'typescript': ['prettier', 'tslint'],
+\  'c': ['astyle']
+\}
+let g:ale_fixers = {
+\  'javascript': ['prettier', 'standard'],
+\  'html': ['prettier', 'tidy'],
+\  'typescript': ['prettier', 'tslint'],
+\  'c': ['astyle']
+\}
 let g:ale_lint_on_save = 1
 let g:ale_fix_on_save = 0
 
