@@ -28,7 +28,7 @@
   # nube.pragmore.com cloud shortcuts
   deploy = push -q prod
   redeploy = !NUBE_TAG_FORCE="force_deploy_$(date "+%Y%m%d_%H%g%S")" && git tag $NUBE_TAG_FORCE && git push -q prod $NUBE_TAG_FORCE
-  env = "git notes --ref=env add -F \"$1\" && git push prod refs/notes/env"
+  env = "!git notes --ref=env add -F \"$1\" && git push prod refs/notes/env"
 
 [credential]
   helper = cache --timeout=3600000
