@@ -23,6 +23,7 @@ Plug 'cespare/vim-toml', { 'for': 'toml', 'branch': 'main' }
 Plug 'jfecher/vale.vim', { 'for': 'vale' }
 Plug 'bakpakin/janet.vim', { 'for': 'janet' }
 Plug 'lluchs/vim-wren', { 'for': 'wren' }
+Plug 'deoplete-plugins/deoplete-clang'
 
 " Initialize plugin system
 call plug#end()
@@ -161,13 +162,14 @@ let g:ale_linters = {
 \  'javascript': ['prettier', 'standard'],
 \  'html': ['prettier', 'tidy'],
 \  'typescript': ['prettier', 'tslint'],
-\  'c': ['astyle']
+\  'c': ['clang'],
+\  'python': ['pylint'],
 \}
 let g:ale_fixers = {
 \  'javascript': ['prettier', 'standard'],
 \  'html': ['prettier', 'tidy'],
 \  'typescript': ['prettier', 'tslint'],
-\  'c': ['astyle']
+\  'c': ['clang']
 \}
 let g:ale_lint_on_save = 1
 let g:ale_fix_on_save = 0
