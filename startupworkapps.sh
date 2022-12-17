@@ -2,4 +2,4 @@
 
 logger "Init work apps"
 cd "$(dirname "$0")"
-./isworkingtime.sh && ./runworkapps.sh
+./isworkingtime.sh || ./runworkapps.sh

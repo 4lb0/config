@@ -6,8 +6,8 @@ HOLIDAY_API="http://nolaborables.com.ar/api/v2/feriados/$(date '+%Y')"
 ###
 # Usage
 # 
-# ./isworkingtime.sh && echo "It's working time"
-# ./isworkingtime.sh || echo "It's lazy time"
+# ./isworkingtime.sh || echo "It's working time"
+# ./isworkingtime.sh && echo "It's lazy time"
 
 # If it's not a weekday..
 [ "$(date '+%u')" -gt 5 ] && exit 0
