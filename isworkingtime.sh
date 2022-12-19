@@ -12,7 +12,8 @@ HOLIDAY_API="http://nolaborables.com.ar/api/v2/feriados/$(date '+%Y')"
 # If it's not a weekday..
 [ "$(date '+%u')" -gt 5 ] && exit 0
 # And is not in the working time
-[ "$(date '+%H')" -gt "$WORKING_TIME_START" ] && [ "$(date '+%H')" -lt "$WORKING_TIME_END" ] && exit 0
+[ "$(date '+%H')" -lt "$WORKING_TIME_START" ] && exit 0
+[ "$(date '+%H')" -gt "$WORKING_TIME_END" ] && exit 0
 # And is not a holiday
 holidayFile="$HOME/.holiday.$(date '+%Y').json"
 [ ! -f "$holidayFile" ] && wget -q -O "$holidayFile" "$HOLIDAY_API"
