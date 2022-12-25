@@ -89,6 +89,7 @@ alias upd="sudo apt update && sudo apt dist-upgrade -y && sudo apt autoremove -y
 alias e="$EDITOR"
 alias dkb="docker-compose build"
 alias dku="docker-compose up"
+alias vi="vi -p \$(git status --porcelain 2> /dev/null | awk '{print \$2}')"
 
 function visit
 {
