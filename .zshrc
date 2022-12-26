@@ -90,6 +90,7 @@ alias e="$EDITOR"
 alias dkb="docker-compose build"
 alias dku="docker-compose up"
 alias vi="vi -p \$(git status --porcelain 2> /dev/null | awk '{print \$2}')"
+alias df="df -h"
 
 function visit
 {
