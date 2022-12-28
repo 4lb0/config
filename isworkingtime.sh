@@ -1,7 +1,7 @@
 #!/bin/bash
 
 WORKING_TIME_START=7
-WORKING_TIME_END=19
+WORKING_TIME_END=17
 HOLIDAY_API="http://nolaborables.com.ar/api/v2/feriados/$(date '+%Y')"
 ###
 # Usage
