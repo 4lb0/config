@@ -92,6 +92,12 @@ alias dku="docker-compose up"
 alias vi="vi -p \$(git status --porcelain 2> /dev/null | awk '{print \$2}')"
 alias df="df -h"
 
+# Using Docker folder
+alias ndc="docker compose -f .docker/compose.yaml"
+alias ncli="docker compose -f .docker/compose.yaml run cli"
+alias nyarn="docker compose -f .docker/compose.yaml run cli yarn"
+alias nsf="docker compose -f .docker/compose.yaml run cli php bin/console"
+
 function visit
 {
   curl -kLs $1 | highlight --syntax html -O xterm256 | less

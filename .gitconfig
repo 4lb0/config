@@ -13,6 +13,7 @@
   st = status
   # Git add and git commit shortcut, usage: git c "Message"
   c = "!git add . && git commit -m \"$1\" #"
+  oops = "!git add . && git commit --amend --no-edit && git push -f"
   br = branch
   co = checkout
   # Pretty log
@@ -25,9 +26,9 @@
   pa = !git remote | xargs -L1 git push --all
   dt = difftool
 
-  # nube.pragmore.com cloud shortcuts
+  # nube.pragmore.com
   deploy = push -q prod
-  redeploy = !NUBE_TAG_FORCE="force_deploy_$(date "+%Y%m%d_%H%g%S")" && git tag $NUBE_TAG_FORCE && git push -q prod $NUBE_TAG_FORCE
+  redeploy = "!git commit --allow-empty -m 'Force deploy' && git push -q prod"
   env = "!git notes --ref=env add -F \"$1\" && git push prod refs/notes/env"
 
 [credential]

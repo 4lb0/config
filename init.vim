@@ -106,6 +106,7 @@ autocmd BufNewFile,BufRead *.phtml set filetype=php
 autocmd BufNewFile,BufRead *.ts, *.tsx set filetype=typescript
 autocmd BufNewFile,BufRead *.php,*.java,*.c setlocal shiftwidth=4 tabstop=4
 autocmd BufNewFile,BufRead *.hwt set filetype=hwt
+autocmd BufNewFile,BufRead *.blt set filetype=bialet
 
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 " => Text, tab and indent related
