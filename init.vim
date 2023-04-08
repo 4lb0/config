@@ -161,9 +161,6 @@ nnoremap <leader>l :Lines<CR>
 nnoremap <leader>S :Ag! <C-R><C-W><CR>
 nnoremap <leader>h :History<CR>
 
-iabbrev ?? ¿
-iabbrev !! ¡
-
 " TODO mappings, yes this maybe be a function later
 let g:light_todo_list_pending = "✘"
 let g:light_todo_list_done = "✔"
