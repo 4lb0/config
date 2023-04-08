@@ -159,7 +159,11 @@ nnoremap <leader>f :Files<CR>
 nnoremap <leader>b :Buffers<CR>
 nnoremap <leader>l :Lines<CR>
 nnoremap <leader>S :Ag! <C-R><C-W><CR>
-nnoremap <leader>h :History<CR>
+" Buffers
+nnoremap <silent> <leader>n :enew<CR>
+nnoremap <silent> <leader>q :bprevious <BAR> bdelete #<CR>
+nnoremap <silent> <leader>v :bnext<CR>
+nnoremap <silent> <leader>c :bprevious<CR>
 
 " TODO mappings, yes this maybe be a function later
 let g:light_todo_list_pending = "✘"
