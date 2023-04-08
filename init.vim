@@ -6,6 +6,7 @@ call plug#begin('~/.vim/plugged')
 
 " Visual plugins
 Plug 'itchyny/lightline.vim'
+Plug 'mengelbrecht/lightline-bufferline'
 
 " IDE
 Plug 'junegunn/fzf', { 'do': { -> fzf#install() } }
@@ -34,6 +35,24 @@ call plug#end()
 
 " Lightline
 set laststatus=2
+set showtabline=2
+let g:lightline = {
+\   'colorscheme': 'darcula',
+\   'active': {
+\    'left': [ [ 'mode', 'paste' ], [ 'readonly', 'filename', 'modified' ] ]
+\   },
+\   'tabline': {
+\    'left': [ ['buffers'] ],
+\    'right': [ ['close'] ]
+\   },
+\   'component_expand': {
+\    'buffers': 'lightline#bufferline#buffers'
+\   },
+\   'component_type': {
+\     'buffers': 'tabsel'
+\   }
+\ }
+
 if !has('gui_running')
     set t_Co=256
 endif
