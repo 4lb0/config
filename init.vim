@@ -154,27 +154,16 @@ nnoremap <silent> m :set relativenumber!<CR>
 nnoremap gs :Git status<CR>
 nnoremap gb :Git blame<CR>
 " Fzf
-nnoremap <leader>t :GFiles<CR>
-nnoremap <leader>f :Files<CR>
-nnoremap <leader>b :Buffers<CR>
-nnoremap <leader>l :Lines<CR>
-nnoremap <leader>S :Ag! <C-R><C-W><CR>
+nnoremap <silent> <leader>t :GFiles<CR>
+nnoremap <silent> <leader>f :Files<CR>
+nnoremap <silent> <leader>b :Buffers<CR>
+nnoremap <silent> <leader>l :Lines<CR>
+nnoremap <silent> <leader>S :Ag! <C-R><C-W><CR>
 " Buffers
 nnoremap <silent> <leader>n :enew<CR>
 nnoremap <silent> <leader>q :bprevious <BAR> bdelete #<CR>
 nnoremap <silent> <leader>v :bnext<CR>
 nnoremap <silent> <leader>c :bprevious<CR>
-
-" TODO mappings, yes this maybe be a function later
-let g:light_todo_list_pending = "✘"
-let g:light_todo_list_done = "✔"
-
-nnoremap <silent> tt :.s/^\([✘✔*-] \)\?/\=submatch(0)=="✘ "?"✔ ":"✘ "/g<bar>let @/=""<cr>
-vnoremap <silent> tt :s/\_^\([✘✔*-] \)\?/\=submatch(1)=="✘ "? "✔ ":"✘ "/g<bar>let @/=""<cr>
-" Add td as todo done
-" Add tp as todo pending 
-" No add todo on empty string
-" 2tt<arrow> motion keys - https://vi.stackexchange.com/questions/5495/mapping-with-motion
 
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 " => JS Standard https://standardjs.com/#vim
