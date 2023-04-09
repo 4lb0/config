@@ -80,20 +80,17 @@ export FZF_DEFAULT_OPTS='--color=fg:#f8f8f2,bg:#282a36,hl:#bd93f9 --color=fg+:#f
 # Disable docker-compose suggestion https://github.com/docker/scan-cli-plugin/issues/149
 export DOCKER_SCAN_SUGGEST=false
 
-alias t="$EDITOR $HOME/TODO.md"
-alias css.br="npm run css-min > /dev/null && cp dist/*.css . && brotli -f *.css && ls -l *.css.br && echo '' && ll *.css.br && rm *.css && rm *.br"
-alias css.gz="npm run css-min > /dev/null && cp dist/*.css . && gzip --best *.css && ls -l *.css.gz && echo '' && ll *.css.gz && rm *.gz"
+# Improve default
 alias ag="ag --ignore \"*.bundle\" --ignore \"*.sql\" -i --color"
 alias less="less -r"
-alias upd="sudo apt update && sudo apt dist-upgrade -y && sudo apt autoremove -y && sudo snap refresh"
-alias e="$EDITOR"
-alias dkb="docker-compose build"
-alias dku="docker-compose up"
-# Vim open edited files
-alias vim="vim \$(git status --porcelain 2> /dev/null | awk '{print \$2}')"
-alias vi=vim
-alias nvim=vim
 alias df="df -h"
+alias nvim="nvim \$(git status --porcelain 2> /dev/null | awk '{print \$2}')"
+
+# Aliases
+alias e="$EDITOR"
+alias upd="sudo apt update && sudo apt dist-upgrade -y && sudo apt autoremove -y && sudo snap refresh && omz update"
+alias css.br="npm run css-min > /dev/null && cp dist/*.css . && brotli -f *.css && ls -l *.css.br && echo '' && ll *.css.br && rm *.css && rm *.br"
+alias css.gz="npm run css-min > /dev/null && cp dist/*.css . && gzip --best *.css && ls -l *.css.gz && echo '' && ll *.css.gz && rm *.gz"
 
 # Using Docker folder
 alias ndc="docker compose -f .docker/compose.yaml"
