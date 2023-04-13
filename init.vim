@@ -100,6 +100,7 @@ set showmatch " highlight matching [{()}]
 set lazyredraw " Speed up the macro, lazy redraw http://www.matthewoakley.co.uk/how-to-speed-up-your-macros-in-vim/
 set omnifunc=syntaxcomplete#Complete " Enable omnicompletion
 let php_htmlInStrings = 1
+set title " Improve terminal title
 
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 " => Search 
