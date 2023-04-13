@@ -162,9 +162,16 @@ nnoremap <silent> <leader>l :Lines<CR>
 nnoremap <silent> <leader>S :Ag! <C-R><C-W><CR>
 " Buffers
 nnoremap <silent> <leader>n :enew<CR>
-nnoremap <silent> <leader>q :bprevious <BAR> bdelete #<CR>
 nnoremap <silent> <leader>v :bnext<CR>
 nnoremap <silent> <leader>c :bprevious<CR>
+" close buffer and go to previous one if exists
+nnoremap <silent> <leader>q :
+\ if len(getbufinfo({'buflisted':1})) > 1  <BAR>
+\   bprevious <BAR>
+\   bdelete # <BAR>
+\ else <BAR>
+\   bdelete <BAR>
+\ endif <CR>
 
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 " => JS Standard https://standardjs.com/#vim
