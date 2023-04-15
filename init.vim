@@ -19,6 +19,7 @@ Plug 'editorconfig/editorconfig-vim'
 
 " Type related
 Plug 'leafgarland/typescript-vim', { 'for': 'typescript' }
+Plug 'maxmellon/vim-jsx-pretty'
 Plug 'nelsyeung/twig.vim', { 'for': 'twig' }
 Plug 'cespare/vim-toml', { 'for': 'toml', 'branch': 'main' }
 Plug 'jfecher/vale.vim', { 'for': 'vale' }
