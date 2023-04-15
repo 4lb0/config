@@ -34,7 +34,7 @@ Install
 
 First install the used apps follow the set up provided in their links, then run 
 
-```
+```bash
 git clone git@github.com:4lb0/config.git ~/.config/profile
 cd ~/.config/profile
 ./install.sh
