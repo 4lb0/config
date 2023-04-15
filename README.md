@@ -25,9 +25,9 @@ The rest of the apps I used but the configuration is not saved in this repositor
 Theme
 -----
 
-The colors palette are provided by [Dracula PRO](https://draculatheme.com).
+The color palette is provided by [Dracula PRO](https://draculatheme.com).
 
-My prefered monospaced font is [Cascadia Code PL Regular 16](https://github.com/microsoft/cascadia-code).
+My prefered monospaced font is [Cascadia Code PL Regular](https://github.com/microsoft/cascadia-code).
 
 Install
 -------
