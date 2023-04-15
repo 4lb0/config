@@ -37,7 +37,7 @@ DISABLE_UPDATE_PROMPT="true"
 # Uncomment the following line to enable command auto-correction.
 ENABLE_CORRECTION="true"
 
-plugins=(git fzf z docker-compose)
+plugins=(git fzf z docker-compose per-directory-history)
 
 source $ZSH/oh-my-zsh.sh
 
