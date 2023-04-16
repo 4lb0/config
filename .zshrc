@@ -100,3 +100,10 @@ function visit
 {
   curl -kLs $1 | highlight --syntax html -O xterm256 | less
 }
+
+# Set a task in the One Thing extension
+function task
+{
+  gsettings --schemadir ~/.local/share/gnome-shell/extensions/one-thing@github.com/schemas \
+    set org.gnome.shell.extensions.one-thing thing-value "'${*}'"
+}
