@@ -102,6 +102,7 @@ set lazyredraw " Speed up the macro, lazy redraw http://www.matthewoakley.co.uk/
 set omnifunc=syntaxcomplete#Complete " Enable omnicompletion
 let php_htmlInStrings = 1
 set title " Improve terminal title
+set list listchars=tab:\ \ ,nbsp:␣,trail:•,extends:⟩,precedes:⟨ " Highlight trailing white space
 
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 " => Search 
