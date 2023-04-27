@@ -90,12 +90,6 @@ alias upd="sudo apt update && sudo apt dist-upgrade -y && sudo apt autoremove -y
 alias css.br="npm run css-min > /dev/null && cp dist/*.css . && brotli -f *.css && ls -l *.css.br && echo '' && ll *.css.br && rm *.css && rm *.br"
 alias css.gz="npm run css-min > /dev/null && cp dist/*.css . && gzip --best *.css && ls -l *.css.gz && echo '' && ll *.css.gz && rm *.gz"
 
-# Using Docker folder
-alias ndc="docker compose -f .docker/compose.yaml"
-alias ncli="docker compose -f .docker/compose.yaml run cli"
-alias nyarn="docker compose -f .docker/compose.yaml run cli yarn"
-alias nsf="docker compose -f .docker/compose.yaml run cli php bin/console"
-
 function visit
 {
   curl -kLs $1 | highlight --syntax html -O xterm256 | less
