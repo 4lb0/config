@@ -82,7 +82,7 @@ export DOCKER_SCAN_SUGGEST=false
 alias ag="ag --ignore \"*.bundle\" --ignore \"*.sql\" -i --color"
 alias less="less -r"
 alias df="df -h"
-alias nvim="nvim \$(test -d .git && (test -f .gitignore && git ls-files -mo --exclude-from=.gitignore || git ls-files -mo))"
+alias nvim="test -d .git && (test -f .gitignore && git ls-files -zmo --exclude-from=.gitignore || git ls-files -zmo) | xargs -0 file -i | grep -v binary | awk  -F ':' 'BEGIN{ORS=\"\\0\"} {print \$1}' | xargs -0 nvim || nvim"
 
 # Aliases
 alias e="$EDITOR"
