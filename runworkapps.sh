@@ -4,5 +4,6 @@ cd $HOME
 
 /snap/bin/firefox&
 gnome-terminal&
-/snap/bin/slack&
+# Temporarely disable slack
+# /snap/bin/slack&
 thunderbird&
