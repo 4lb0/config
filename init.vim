@@ -16,6 +16,7 @@ Plug 'tpope/vim-commentary'
 Plug 'tpope/vim-fugitive'
 Plug 'neoclide/coc.nvim', {'branch': 'release'}
 Plug 'editorconfig/editorconfig-vim'
+Plug 'vim-test/vim-test'
 
 " Type related
 Plug 'leafgarland/typescript-vim', { 'for': 'typescript' }
@@ -153,11 +154,13 @@ let mapleader = ","
 set pastetoggle=<F3>
 " Toggle relative numbers line
 nnoremap <silent> m :set relativenumber!<CR>
-" Git 
+" Git
 nnoremap gs :Git status<CR>
 nnoremap gb :Git blame<CR>
+" Tests
+nnoremap <silent> <leader>t :TestSuite<CR>
 " Fzf
-nnoremap <silent> <leader>t :GFiles<CR>
+nnoremap <silent> <leader>g :GFiles<CR>
 nnoremap <silent> <leader>f :Files<CR>
 nnoremap <silent> <leader>b :Buffers<CR>
 nnoremap <silent> <leader>l :Lines<CR>
