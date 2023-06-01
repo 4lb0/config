@@ -4,8 +4,9 @@ export ANDROID_SDK_ROOT="$HOME/Android/Sdk"
 export YARN_BIN="$HOME/.yarn/bin"
 export YARN_MODULES_BIN="$HOME/.config/yarn/global/node_modules/.bin"
 export JAVA_HOME=$(update-alternatives --query java | grep Value | awk 'match($2, /\/usr\/lib\/jvm\/[^\/]+\//) {print substr($2, RSTART, RLENGTH)}')
+export SALESFORCE_BIN="$HOME/apps/sfdx/bin"
 
-export PATH=$HOME/bin:$HOME/.local/bin:/usr/local/bin:$NPM_PACKAGES/bin:$RUBY_LOCAL:$ANDROID_SDK_ROOT/emulator:$ANDROID_SDK_ROOT/platform-tools:$YARN_BIN:$YARN_MODULES_BIN:$JAVA_HOME:$PATH
+export PATH=$HOME/bin:$HOME/.local/bin:/usr/local/bin:$NPM_PACKAGES/bin:$RUBY_LOCAL:$ANDROID_SDK_ROOT/emulator:$ANDROID_SDK_ROOT/platform-tools:$YARN_BIN:$YARN_MODULES_BIN:$JAVA_HOME:$SALESFORCE_BIN:$PATH
 
 if type "composer" > /dev/null; then
   export PATH=$(composer global config bin-dir --absolute --quiet):$PATH
