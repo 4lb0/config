@@ -36,16 +36,25 @@ call plug#end()
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 
 " Lightline
-set laststatus=2
 set showtabline=2
+set noshowmode
+
+function! CocCurrentFunction()
+    return get(b:, 'coc_current_function', '')
+endfunction
+
 let g:lightline = {
 \   'colorscheme': 'darcula',
 \   'active': {
-\    'left': [ [ 'mode', 'paste' ], [ 'readonly', 'filename', 'modified' ] ]
+\    'left': [ [ 'mode', 'paste' ], [ 'cocstatus', 'currentfunction', 'readonly', 'filename', 'modified' ] ]
 \   },
 \   'tabline': {
 \    'left': [ ['buffers'] ],
 \    'right': [ ['close'] ]
+\   },
+\   'component_function': {
+\    'cocstatus': 'coc#status',
+\    'currentfunction': 'CocCurrentFunction'
 \   },
 \   'component_expand': {
 \    'buffers': 'lightline#bufferline#buffers'
@@ -66,11 +75,9 @@ let g:dracula_colorterm = 0
 colorscheme dracula_pro
 
 " CoC
-
 set cmdheight=2
 set updatetime=300
 set shortmess+=c
-
 set signcolumn=number
 
 " Use tab for trigger completion with characters ahead and navigate.
