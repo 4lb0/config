@@ -167,8 +167,8 @@ nnoremap <silent> <leader>l :Lines<CR>
 nnoremap <silent> <leader>S :Ag! <C-R><C-W><CR>
 " Buffers
 nnoremap <silent> <leader>n :enew<CR>
-nnoremap <silent> <leader>v :bnext<CR>
-nnoremap <silent> <leader>c :bprevious<CR>
+nnoremap <silent> <tab> :bnext<CR>
+nnoremap <silent> <s-tab> :bprevious<CR>
 " close buffer and go to previous one if exists
 nnoremap <silent> <leader>q :
 \ if len(getbufinfo({'buflisted':1})) > 1  <BAR>
