@@ -4,7 +4,7 @@ Config
 This repository contains my set up. I use Ubuntu on a daily basis
 but this setup used to work on iOS.
 
-![Neovim in GNOME Terminal screenshot](https://user-images.githubusercontent.com/142173/232212717-76b3ea44-ccfa-466e-9f61-50a41b8a5fdf.png)
+![Neovim in GNOME Terminal screenshot](https://github.com/4lb0/config/assets/142173/ea2def51-309c-4258-8d28-6a6b2d6f3e62)
 
 Apps
 ----
