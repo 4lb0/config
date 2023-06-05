@@ -1,15 +1,18 @@
 Config
 ======
 
-This repository contains my set up. I use Ubuntu on a daily basis but this setup worked on iOS.
+This repository contains my set up. I use Ubuntu on a daily basis
+but this setup used to work on iOS.
 
 ![Neovim in GNOME Terminal screenshot](https://user-images.githubusercontent.com/142173/232212717-76b3ea44-ccfa-466e-9f61-50a41b8a5fdf.png)
 
 Apps
 ----
 
-* **Terminal:** [GNOME Terminal](https://help.gnome.org/users/gnome-terminal/stable/) or [iTerm2](https://iterm2.com/)
-* **Shell:** [zsh](https://www.zsh.org/), with [Oh My Zsh](https://ohmyz.sh/) and [fzf](https://github.com/junegunn/fzf)
+* **Terminal:** [GNOME Terminal](https://help.gnome.org/users/gnome-terminal/stable/)
+  or [iTerm2](https://iterm2.com/) with [tmux](https://github.com/tmux/tmux/wiki)
+* **Shell:** [zsh](https://www.zsh.org/), with [Oh My Zsh](https://ohmyz.sh/)
+  and [fzf](https://github.com/junegunn/fzf)
 * **Editor:** [Neovim](https://neovim.io/)
 * **Version control:** [git](https://git-scm.com/)
 
@@ -32,7 +35,7 @@ My prefered monospaced font is [Cascadia Code PL Regular](https://github.com/mic
 Install
 -------
 
-First install the used apps follow the set up provided in their links, then run 
+First install the used apps follow the set up provided in their links, then run
 
 ```bash
 git clone git@github.com:4lb0/config.git ~/.config/profile
