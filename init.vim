@@ -202,7 +202,7 @@ nnoremap <silent> <leader>n :enew<CR>
 nnoremap <silent> <tab> :bnext<CR>
 nnoremap <silent> <s-tab> :bprevious<CR>
 " close buffer and go to previous one if exists
-nnoremap <silent> <leader>q :
+nnoremap <silent> q :
 \ if len(getbufinfo({'buflisted':1})) > 1  <BAR>
 \   bprevious <BAR>
 \   bdelete # <BAR>
