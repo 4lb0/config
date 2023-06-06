@@ -163,6 +163,8 @@ autocmd BufNewFile,BufRead *.php,*.java,*.c setlocal shiftwidth=4 tabstop=4
 autocmd BufNewFile,BufRead *.hwt set filetype=hwt
 autocmd BufNewFile,BufRead *.blt set filetype=bialet
 
+autocmd BufNewFile *pages/*.md 0r ~/.vim/skeletons/blog-post.md
+
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 " => Text, tab and indent related
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
