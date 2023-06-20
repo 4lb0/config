@@ -8,3 +8,4 @@ gnome-terminal&
 thunderbird&
 # VS Code
 /usr/share/code/code&
+//snap/bin/standard-notes&
