@@ -102,3 +102,7 @@ function task
   gsettings --schemadir ~/.local/share/gnome-shell/extensions/one-thing@github.com/schemas \
     set org.gnome.shell.extensions.one-thing thing-value "'${*}'"
 }
+
+# sfdx autocomplete setup
+eval SFDX_AC_ZSH_SETUP_PATH=/home/albo/.cache/sfdx/autocomplete/zsh_setup \
+  && test -f $SFDX_AC_ZSH_SETUP_PATH && source $SFDX_AC_ZSH_SETUP_PATH
