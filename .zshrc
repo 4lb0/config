@@ -91,6 +91,13 @@ alias upd="sudo apt update && sudo apt dist-upgrade -y && sudo apt autoremove -y
 alias css.br="npm run css-min > /dev/null && cp dist/*.css . && brotli -f *.css && ls -l *.css.br && echo '' && ll *.css.br && rm *.css && rm *.br"
 alias css.gz="npm run css-min > /dev/null && cp dist/*.css . && gzip --best *.css && ls -l *.css.gz && echo '' && ll *.css.gz && rm *.gz"
 
+# Alias to add and commit, no need to put quotes for the message
+function c
+{
+  git add .
+  git commit -m "${*}"
+}
+
 function visit
 {
   curl -kLs $1 | highlight --syntax html -O xterm256 | less
