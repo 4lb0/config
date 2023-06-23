@@ -83,13 +83,27 @@ export DOCKER_SCAN_SUGGEST=false
 alias ag="ag --ignore \"*.bundle\" --ignore \"*.sql\" -i --color"
 alias less="less -r"
 alias df="df -h"
-alias nvim="test -d .git && (test -f .gitignore && git ls-files -zmo --exclude-from=.gitignore || git ls-files -zmo) | xargs -0 file -i | grep -v binary | awk  -F ':' 'BEGIN{ORS=\"\\0\"} {print \$1}' | xargs -0 nvim || nvim"
 
 # Aliases
-alias e="$EDITOR"
 alias upd="sudo apt update && sudo apt dist-upgrade -y && sudo apt autoremove -y && sudo snap refresh && omz update"
 alias css.br="npm run css-min > /dev/null && cp dist/*.css . && brotli -f *.css && ls -l *.css.br && echo '' && ll *.css.br && rm *.css && rm *.br"
 alias css.gz="npm run css-min > /dev/null && cp dist/*.css . && gzip --best *.css && ls -l *.css.gz && echo '' && ll *.css.gz && rm *.gz"
+
+# Opens default editor with the files or with the changed git files if able.
+function e
+{
+  if [ $# -lt 1 ]; then
+    test -d .git && \
+      (test -f .gitignore \
+        && git ls-files -zmo --exclude-from=.gitignore \
+        || git ls-files -zmo) \
+      | xargs -0 file -i | grep -v binary \
+      | awk  -F ':' 'BEGIN{ORS="\0"} {print $1}' | xargs -0 $EDITOR \
+      || $EDITOR
+  else
+    $EDITOR ${*}
+  fi
+}
 
 # Alias to add and commit, no need to put quotes for the message
 function c
