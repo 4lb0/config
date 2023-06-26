@@ -88,6 +88,7 @@ alias df="df -h"
 alias upd="sudo apt update && sudo apt dist-upgrade -y && sudo apt autoremove -y && sudo snap refresh && omz update"
 alias css.br="npm run css-min > /dev/null && cp dist/*.css . && brotli -f *.css && ls -l *.css.br && echo '' && ll *.css.br && rm *.css && rm *.br"
 alias css.gz="npm run css-min > /dev/null && cp dist/*.css . && gzip --best *.css && ls -l *.css.gz && echo '' && ll *.css.gz && rm *.gz"
+alias pa="git remote | xargs -L1 git push --all"
 
 # Opens default editor with the files or with the changed git files if able.
 function e
