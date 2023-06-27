@@ -23,8 +23,6 @@ Plug 'leafgarland/typescript-vim', { 'for': 'typescript' }
 Plug 'maxmellon/vim-jsx-pretty'
 Plug 'nelsyeung/twig.vim', { 'for': 'twig' }
 Plug 'cespare/vim-toml', { 'for': 'toml', 'branch': 'main' }
-Plug 'jfecher/vale.vim', { 'for': 'vale' }
-Plug 'bakpakin/janet.vim', { 'for': 'janet' }
 Plug 'lluchs/vim-wren', { 'for': 'wren' }
 Plug 'deoplete-plugins/deoplete-clang'
 
