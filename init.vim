@@ -136,6 +136,7 @@ set omnifunc=syntaxcomplete#Complete " Enable omnicompletion
 let php_htmlInStrings = 1
 set title " Improve terminal title
 set list listchars=tab:\ \ ,nbsp:␣,trail:•,extends:⟩,precedes:⟨ " Highlight trailing white space
+set clipboard=unnamedplus " share clipboard with OS
 
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 " => Search
