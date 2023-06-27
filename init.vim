@@ -32,7 +32,7 @@ Plug 'deoplete-plugins/deoplete-clang'
 call plug#end()
 
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-" => Plugins configuration 
+" => Plugins configuration
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 
 " Lightline
@@ -125,10 +125,10 @@ nnoremap <silent><nowait> <space>o  :<C-u>CocList outline<cr>
 nnoremap <silent><nowait> <space>s  :<C-u>CocList -I symbols<cr>
 
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-" => IDE configuration 
+" => IDE configuration
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 set encoding=utf-8
-set shell=/bin/zsh 
+set shell=/bin/zsh
 set relativenumber " show relative numbers line
 set showmatch " highlight matching [{()}]
 set lazyredraw " Speed up the macro, lazy redraw http://www.matthewoakley.co.uk/how-to-speed-up-your-macros-in-vim/
@@ -138,10 +138,10 @@ set title " Improve terminal title
 set list listchars=tab:\ \ ,nbsp:␣,trail:•,extends:⟩,precedes:⟨ " Highlight trailing white space
 
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-" => Search 
+" => Search
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 set ignorecase " Ignore case when searching
-set smartcase " When searching try to be smart about cases 
+set smartcase " When searching try to be smart about cases
 set hlsearch " Highlight search results
 set incsearch " Makes search act like search in modern browsers
 
@@ -181,7 +181,7 @@ set wrap "Wrap lines
 set nofoldenable " Prevent folding
 
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-" => Custom mappings 
+" => Custom mappings
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 let mapleader = ","
 " Move pastetoggle to F3 because guake uses F2
