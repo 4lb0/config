@@ -190,6 +190,7 @@ nnoremap <silent> m :set relativenumber!<CR>
 " Git
 nnoremap gs :Git status<CR>
 nnoremap gb :Git blame<CR>
+nnoremap <silent> rr :wa <BAR>Git add . <BAR>Git commit --message="#wip testing in remote" --quiet<BAR>Git push --quiet<CR>
 " Tests
 nnoremap <silent> <leader>t :TestSuite<CR>
 " Fzf
