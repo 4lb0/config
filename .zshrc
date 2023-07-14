@@ -83,6 +83,8 @@ export DOCKER_SCAN_SUGGEST=false
 alias ag="ag --ignore \"*.bundle\" --ignore \"*.sql\" -i --color"
 alias less="less -r"
 alias df="df -h"
+# This alias is to prevent to keep opening GhostScript
+alias gs="git status"
 
 # Aliases
 alias upd="omz update & sudo snap refresh & nvim +PluginUpdate +qall & sudo sh -c 'apt update && apt dist-upgrade -y && apt autoremove -y'"
