@@ -4,7 +4,7 @@ cd $HOME
 
 /snap/bin/firefox&
 gnome-terminal&
-/snap/bin/slack&
+slack&
 thunderbird&
 # VS Code
 /usr/share/code/code&
