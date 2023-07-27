@@ -84,7 +84,7 @@ export DOCKER_SCAN_SUGGEST=false
 # Improve default
 alias ag="ag --ignore \"*.bundle\" --ignore \"*.sql\" -i --color"
 alias less="less -r"
-alias df="df -h"
+alias df="df -h -T | grep -v squashfs"
 # This alias is to prevent to keep opening GhostScript
 alias gs="git status"
 
