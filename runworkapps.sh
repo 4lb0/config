@@ -3,9 +3,7 @@
 cd $HOME
 
 /snap/bin/firefox&
-gnome-terminal&
+gnome-terminal --full-screen -- tmux attach&
 slack&
 thunderbird&
-# VS Code
-/usr/share/code/code&
-//snap/bin/standard-notes&
+/snap/bin/standard-notes&
