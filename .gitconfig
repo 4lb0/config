@@ -1,7 +1,9 @@
 [user]
-  name = Rodrigo “Albo” Arce
-  email = albo@pragmore.com
+	name = Rodrigo Arce
+  email = rsarce@gmail.com
 
+[includeIf "gitdir:~/work/**"]
+  path = ~/work/.gitconfig
 
 [core]
   editor = nvim
