@@ -17,6 +17,7 @@ Plug 'tpope/vim-fugitive'
 Plug 'neoclide/coc.nvim', {'branch': 'release'}
 Plug 'editorconfig/editorconfig-vim'
 Plug 'vim-test/vim-test'
+Plug 'Exafunction/codeium.vim'
 
 " Type related
 Plug 'leafgarland/typescript-vim', { 'for': 'typescript' }
