@@ -25,7 +25,6 @@ Plug 'maxmellon/vim-jsx-pretty'
 Plug 'nelsyeung/twig.vim', { 'for': 'twig' }
 Plug 'cespare/vim-toml', { 'for': 'toml', 'branch': 'main' }
 Plug 'lluchs/vim-wren', { 'for': 'wren' }
-Plug 'deoplete-plugins/deoplete-clang'
 
 " Initialize plugin system
 call plug#end()
@@ -107,7 +106,7 @@ nmap <silent> gr <Plug>(coc-references)
 " Highlight the symbol and its references when holding the cursor
 autocmd CursorHold * silent call CocActionAsync('highlight')
 " Symbol renaming
-nmap <leader>rn <Plug>(coc-rename)
+nmap <F2> <Plug>(coc-rename)
 " Add `:Format` command to format current buffer
 command! -nargs=0 Format :call CocActionAsync('format')
 " Add `:Fold` command to fold current buffer
@@ -220,7 +219,7 @@ let g:ale_linters = {
 \  'javascript': ['prettier', 'standard'],
 \  'html': ['prettier', 'tidy'],
 \  'typescript': ['prettier', 'tslint'],
-\  'c': ['clang'],
+\  'c': ['clang-format'],
 \  'python': ['pylint'],
 \}
 let g:ale_fixers = {
@@ -228,7 +227,7 @@ let g:ale_fixers = {
 \  'javascript': ['prettier', 'standard'],
 \  'html': ['prettier', 'tidy'],
 \  'typescript': ['prettier', 'tslint'],
-\  'c': ['clang'],
+\  'c': ['clang-format'],
 \  'rust': ['rustfmt'],
 \}
 let g:ale_lint_on_save = 1
