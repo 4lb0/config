@@ -133,3 +133,7 @@ function task
 # sfdx autocomplete setup
 eval SFDX_AC_ZSH_SETUP_PATH=/home/albo/.cache/sfdx/autocomplete/zsh_setup \
   && test -f $SFDX_AC_ZSH_SETUP_PATH && source $SFDX_AC_ZSH_SETUP_PATH
+
+# begin forge completion
+. <(forge --completion)
+# end forge completion
