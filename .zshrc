@@ -12,12 +12,10 @@ if type "composer" > /dev/null; then
   export PATH=$(composer global config bin-dir --absolute --quiet):$PATH
 fi
 
-if type "pyenv" > /dev/null; then
-  export PYENV_ROOT="$HOME/.pyenv"
-  command -v pyenv >/dev/null || export PATH="$PYENV_ROOT/bin:$PATH"
-  eval "$(pyenv init -)"
-  eval "$(pyenv virtualenv-init -)"
-fi
+export PYENV_ROOT="$HOME/.pyenv"
+export PATH="$PYENV_ROOT/bin:$PATH"
+eval "$(pyenv init -)"
+eval "$(pyenv virtualenv-init -)"
 
 # NVM setup
 export NVM_DIR="$HOME/.nvm"
