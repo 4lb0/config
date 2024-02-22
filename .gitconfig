@@ -58,3 +58,10 @@
 
 [pull]
 	rebase = true
+
+[branch]
+  sort = -commiterdate
+
+[rerere]
+  enabled = true
+  autoupdate = true
