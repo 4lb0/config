@@ -167,6 +167,7 @@ autocmd BufNewFile,BufRead *.hwt set filetype=hwt
 autocmd BufNewFile,BufRead *.blt set filetype=bialet
 autocmd BufNewFile,BufRead *.abar set filetype=abar
 autocmd BufNewFile,BufRead *.h set filetype=c
+autocmd BufNewFile,BufRead *.asm set filetype=nasm
 
 autocmd BufNewFile *pages/*.md 0r ~/.vim/skeletons/blog-post.md
 
