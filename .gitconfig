@@ -60,7 +60,9 @@
 	rebase = true
 
 [branch]
-  sort = -commiterdate
+  # Sort branches by last commit fail on a lot of branch commands
+  # @TODO search for alternatives.
+  # sort = -commiterdate
 
 [rerere]
   enabled = true
