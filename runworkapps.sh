@@ -3,7 +3,7 @@
 cd $HOME
 
 /snap/bin/firefox&
-gnome-terminal --full-screen -- tmux attach&
+konsole&
 slack&
 thunderbird&
 /snap/bin/standard-notes&

@@ -9,7 +9,7 @@ but this setup used to work on iOS.
 Apps
 ----
 
-* **Terminal:** [GNOME Terminal](https://help.gnome.org/users/gnome-terminal/stable/)
+* **Terminal:** [Konsole](https://konsole.kde.org/),
   or [iTerm2](https://iterm2.com/) with [tmux](https://github.com/tmux/tmux/wiki)
 * **Shell:** [zsh](https://www.zsh.org/), with [Oh My Zsh](https://ohmyz.sh/)
   and [fzf](https://github.com/junegunn/fzf)
