@@ -1,6 +1,6 @@
 [Appearance]
 ColorScheme=Dracula
-Font=JetBrains Mono,16,-1,5,50,0,0,0,0,0
+Font=JetBrains Mono,16,-1,5,57,0,0,0,0,0,Medium
 
 [General]
 Command=tmux a
