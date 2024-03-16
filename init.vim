@@ -45,7 +45,7 @@ endfunction
 let g:lightline = {
 \   'colorscheme': 'darcula',
 \   'active': {
-\    'left': [ [ 'mode', 'paste' ], [ 'cocstatus', 'currentfunction', 'readonly', 'filename', 'modified' ] ]
+\    'left': [ [ 'mode', 'paste' ], ['readonly', 'filename', 'modified' ], [ 'cocstatus', 'currentfunction', 'codeium'] ]
 \   },
 \   'tabline': {
 \    'left': [ ['buffers'] ],
@@ -53,7 +53,8 @@ let g:lightline = {
 \   },
 \   'component_function': {
 \    'cocstatus': 'coc#status',
-\    'currentfunction': 'CocCurrentFunction'
+\    'currentfunction': 'CocCurrentFunction',
+\    'codeium': 'codeium#GetStatusString'
 \   },
 \   'component_expand': {
 \    'buffers': 'lightline#bufferline#buffers'
