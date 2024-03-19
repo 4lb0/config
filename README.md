@@ -30,7 +30,8 @@ Theme
 
 The color palette is provided by [Dracula PRO](https://draculatheme.com).
 
-My prefered monospaced font is [Cascadia Code PL Regular](https://github.com/microsoft/cascadia-code).
+My prefered monospaced font is [JetBrains Mono](https://github.com/JetBrains/JetBrainsMono),
+previously used [Cascadia Code PL Regular](https://github.com/microsoft/cascadia-code).
 
 Install
 -------
