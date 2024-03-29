@@ -1,6 +1,6 @@
 [user]
 	name = Rodrigo Arce
-  email = rsarce@gmail.com
+  email = albo@pragmore.com
 
 [includeIf "gitdir:~/work/**"]
   path = ~/work/.gitconfig
@@ -14,9 +14,6 @@
 
 [alias]
   st = status
-  # Git add and git commit shortcut, usage: git c "Message"
-  c = "!git add . && git commit -m \"$1\" #"
-  oops = "!git add . && git commit --amend --no-edit && git push -f"
   br = branch
   co = checkout
   # Pretty log
@@ -27,12 +24,12 @@
   pr = pull --rebase
   # Git push all shortcut, useful when multiple remotes
   pa = !git remote | xargs -L1 git push --all
-  dt = difftool
+  # Git fetch all shortcut
+  fa = fetch --all
 
   # nube.pragmore.com
   deploy = push -q prod
   redeploy = "!git commit --allow-empty -m 'Force deploy' && git push -q prod"
-  env = "!git notes --ref=env add -F \"$1\" && git push prod refs/notes/env"
 
 [credential]
   helper = cache --timeout=3600000
