@@ -124,10 +124,5 @@ function task
     set org.gnome.shell.extensions.one-thing thing-value "'${*}'"
 }
 
-# sfdx autocomplete setup
-eval SFDX_AC_ZSH_SETUP_PATH=/home/albo/.cache/sfdx/autocomplete/zsh_setup \
-  && test -f $SFDX_AC_ZSH_SETUP_PATH && source $SFDX_AC_ZSH_SETUP_PATH
-
-# begin forge completion
-. <(forge --completion)
-# end forge completion
+eval
+SF_AC_ZSH_SETUP_PATH=/home/albo/.cache/sf/autocomplete/zsh_setup && test -f $SF_AC_ZSH_SETUP_PATH && source $SF_AC_ZSH_SETUP_PATH; # sf autocomplete setup
