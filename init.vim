@@ -130,7 +130,7 @@ nnoremap <silent><nowait> <space>s  :<C-u>CocList -I symbols<cr>
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 set encoding=utf-8
 set shell=/bin/zsh
-set relativenumber " show relative numbers line
+set number relativenumber " show hybrid numbers line
 set showmatch " highlight matching [{()}]
 set lazyredraw " Speed up the macro, lazy redraw http://www.matthewoakley.co.uk/how-to-speed-up-your-macros-in-vim/
 set omnifunc=syntaxcomplete#Complete " Enable omnicompletion
