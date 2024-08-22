@@ -124,5 +124,17 @@ function task
     set org.gnome.shell.extensions.one-thing thing-value "'${*}'"
 }
 
+function sflogin
+{
+  local instance_url=${2:-https://test.salesforce.com}
+  sf auth web login --instance-url $instance_url --alias $1
+}
+
+function sfget
+{
+  local manifest_file=${2:-package.xml.log}
+  sf project retrieve start --manifest $manifest_file --target-org $1
+}
+
 eval
 SF_AC_ZSH_SETUP_PATH=/home/albo/.cache/sf/autocomplete/zsh_setup && test -f $SF_AC_ZSH_SETUP_PATH && source $SF_AC_ZSH_SETUP_PATH; # sf autocomplete setup
