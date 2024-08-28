@@ -166,6 +166,7 @@ autocmd BufNewFile,BufRead *.php,*.java,*.c setlocal shiftwidth=4 tabstop=4
 autocmd BufNewFile,BufRead *.hwt set filetype=hwt
 autocmd BufNewFile,BufRead *.blt set filetype=bialet
 autocmd BufNewFile,BufRead *.abar set filetype=abar
+autocmd BufNewFile,BufRead *.lol set filetype=lol
 autocmd BufNewFile,BufRead *.h set filetype=c
 autocmd BufNewFile,BufRead *.asm set filetype=nasm
 
