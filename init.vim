@@ -15,6 +15,7 @@ Plug 'dense-analysis/ale'
 Plug 'tpope/vim-commentary'
 Plug 'tpope/vim-fugitive'
 Plug 'neoclide/coc.nvim', {'branch': 'release'}
+Plug 'mhartington/formatter.nvim'
 Plug 'editorconfig/editorconfig-vim'
 Plug 'Exafunction/codeium.vim'
 
@@ -23,7 +24,7 @@ Plug 'leafgarland/typescript-vim', { 'for': 'typescript' }
 Plug 'maxmellon/vim-jsx-pretty'
 Plug 'nelsyeung/twig.vim', { 'for': 'twig' }
 Plug 'cespare/vim-toml', { 'for': 'toml', 'branch': 'main' }
-Plug 'lluchs/vim-wren', { 'for': 'wren' }
+Plug 'bialet/bialet.vim', { 'for': 'wren' }
 
 " Initialize plugin system
 call plug#end()
