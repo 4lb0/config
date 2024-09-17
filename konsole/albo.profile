@@ -1,6 +1,9 @@
 [Appearance]
+AntiAliasFonts=true
 ColorScheme=Dracula
-Font=JetBrains Mono,16,-1,5,57,0,0,0,0,0,Medium
+EmojiFont=Noto Color Emoji,12,-1,5,50,0,0,0,0,0
+Font=JetBrains Mono,16,-1,5,50,0,0,0,0,0
+UseFontLineChararacters=true
 
 [General]
 Command=tmux a
