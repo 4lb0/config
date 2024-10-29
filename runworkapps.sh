@@ -7,3 +7,4 @@ konsole&
 slack&
 thunderbird&
 /snap/bin/standard-notes&
+/snap/bin/google-chat-desktop&
