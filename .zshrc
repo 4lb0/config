@@ -18,6 +18,20 @@ export NVM_DIR="$HOME/.nvm"
 [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh" # This loads nvm
 [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"  # This loads nvm bash_completion
 
+# Python Virtualenv
+autoload -U add-zsh-hook
+
+function auto_activate_venv() {
+  if [[ -f .venv/bin/activate ]]; then
+    source .venv/bin/activate
+  elif [[ -n $VIRTUAL_ENV ]]; then
+    deactivate  # Deactivate if we leave the directory
+  fi
+}
+
+add-zsh-hook chpwd auto_activate_venv
+auto_activate_venv  # Trigger on initial shell start
+
 # Path to your oh-my-zsh installation.
 export ZSH="$HOME/.oh-my-zsh"
 
@@ -88,6 +102,7 @@ alias css.br="npm run css-min > /dev/null && cp dist/*.css . && brotli -f *.css 
 alias css.gz="npm run css-min > /dev/null && cp dist/*.css . && gzip --best *.css && ls -l *.css.gz && echo '' && ll *.css.gz && rm *.gz"
 alias pa="git remote | xargs -L1 git push --all"
 alias rr="git add . && git commit -m '#wip testing in remote' && git push"
+alias fad="fastapi dev main.py"
 
 # Opens default editor with the files or with the changed git files if able.
 function e
@@ -124,16 +139,29 @@ function task
     set org.gnome.shell.extensions.one-thing thing-value "'${*}'"
 }
 
+# Login to Salesforce
 function sflogin
 {
   local instance_url=${2:-https://test.salesforce.com}
   sf auth web login --instance-url $instance_url --alias $1
 }
 
+# Fetch the metadata of the Salesforce project
 function sfget
 {
   local manifest_file=${2:-package.xml.log}
   sf project retrieve start --manifest $manifest_file --target-org $1
+}
+
+# Start the project
+function start() {
+  if [[ -f "main.py" ]]; then
+    fastapi dev main.py
+  elif [[ -f "pnpm-lock.yaml" ]]; then
+    pnpm dev
+  else
+    echo -e "\e[31mNo recognized project to start\e[0m"
+  fi
 }
 
 eval
