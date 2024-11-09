@@ -8,6 +8,17 @@
 [core]
   editor = nvim
   autocrlf = false
+  pager = delta
+
+[interactive]
+    diffFilter = delta --color-only
+
+# https://github.com/dandavison/delta#get-started
+[delta]
+    navigate = true
+
+[merge]
+    conflictstyle = zdiff3
 
 [color]
   ui = auto
