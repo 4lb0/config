@@ -146,11 +146,20 @@ function sflogin
   sf auth web login --instance-url $instance_url --alias $1
 }
 
-# Fetch the metadata of the Salesforce project
+# Fetch the package.xml.log metadata of the Salesforce project
 function sfget
 {
   local manifest_file=${2:-package.xml.log}
   sf project retrieve start --manifest $manifest_file --target-org $1
+}
+
+# Fetch all the metadata of the Salesforce project
+function sfall
+{
+  mkdir -p mdapioutput
+  sf project convert source --source-dir . --output-dir mdapioutput/
+  sfget $1 mdapioutput/package.xml
+  rm -rf mdapioutput
 }
 
 # Start the project
