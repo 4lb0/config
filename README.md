@@ -1,8 +1,7 @@
 Config
 ======
 
-This repository contains my set up. I use Ubuntu on a daily basis
-but this setup used to work on iOS.
+This repository contains my set up. I use Ubuntu and iOS on a daily basis.
 
 ![Neovim in GNOME Terminal screenshot](https://github.com/4lb0/config/assets/142173/4dfa1e9e-9f69-4486-a0ea-bf6c2ddcba3d)
 
@@ -22,8 +21,6 @@ The rest of the apps I used but the configuration is not saved in this repositor
 * **Email client:** [Thunderbird](https://www.thunderbird.net/)
 * **Note-taking:** [Standard Notes](https://standardnotes.com/)
 * **Spell checker:** [LanguageTool](https://languagetool.org/)
-* **Time tracking:** [Toggl](https://toggl.com/)
-* **Calendar:** [Reclaim](https://reclaim.ai)
 
 Theme
 -----

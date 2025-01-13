@@ -7,6 +7,7 @@ call plug#begin('~/.vim/plugged')
 " Visual plugins
 Plug 'itchyny/lightline.vim'
 Plug 'mengelbrecht/lightline-bufferline'
+Plug 'dracula/vim', { 'as': 'dracula' }
 
 " IDE
 Plug 'junegunn/fzf', { 'do': { -> fzf#install() } }
@@ -32,6 +33,8 @@ call plug#end()
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 " => Plugins configuration
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+
+colorscheme dracula
 
 " Lightline
 set showtabline=2
@@ -67,11 +70,6 @@ if !has('gui_running')
     set t_Co=256
 endif
 syntax enable
-
-packadd! dracula_pro
-syntax enable
-let g:dracula_colorterm = 0
-colorscheme dracula_pro
 
 " CoC
 set cmdheight=2
