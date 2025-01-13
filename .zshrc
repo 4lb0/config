@@ -1,17 +1,7 @@
 export NPM_PACKAGES="$HOME/.npm_packages"
 export RUBY_LOCAL="$HOME/.gem/ruby/2.7.0/bin"
-export ANDROID_SDK_ROOT="$HOME/Android/Sdk"
-export YARN_BIN="$HOME/.yarn/bin"
-export YARN_MODULES_BIN="$HOME/.config/yarn/global/node_modules/.bin"
-export JAVA_HOME=$(update-alternatives --query java | grep Value | awk 'match($2, /\/usr\/lib\/jvm\/[^\/]+\//) {print substr($2, RSTART, RLENGTH)}')
-export SALESFORCE_BIN="$HOME/apps/sfdx/bin"
-export CUDA_BIN="/usr/local/cuda/bin"
 
-export PATH=$HOME/bin:$HOME/.local/bin:/usr/local/bin:$NPM_PACKAGES/bin:$RUBY_LOCAL:$ANDROID_SDK_ROOT/emulator:$ANDROID_SDK_ROOT/platform-tools:$YARN_BIN:$YARN_MODULES_BIN:$JAVA_HOME:$SALESFORCE_BIN:$CUDA_BIN:$PATH
-
-if type "composer" > /dev/null; then
-  export PATH=$(composer global config bin-dir --absolute --quiet):$PATH
-fi
+export PATH=$HOME/bin:$HOME/.local/bin:/usr/local/bin:$NPM_PACKAGES/bin:$RUBY_LOCAL:$PATH
 
 # NVM setup
 export NVM_DIR="$HOME/.nvm"
@@ -92,7 +82,6 @@ export DOCKER_SCAN_SUGGEST=false
 # Improve default
 alias ag="ag --ignore \"*.bundle\" --ignore \"*.sql\" -i --color"
 alias less="less -r"
-alias df="df -h -T | grep -v squashfs"
 # This alias is to prevent to keep opening GhostScript
 alias gs="git status"
 
@@ -100,9 +89,7 @@ alias gs="git status"
 alias upd="omz update & sudo snap refresh & nvim +PlugUpdate +qall & sudo sh -c 'apt update && apt dist-upgrade -y && apt autoremove -y' & (npm install npm@latest -g &&  npm update -g) &"
 alias css.br="npm run css-min > /dev/null && cp dist/*.css . && brotli -f *.css && ls -l *.css.br && echo '' && ll *.css.br && rm *.css && rm *.br"
 alias css.gz="npm run css-min > /dev/null && cp dist/*.css . && gzip --best *.css && ls -l *.css.gz && echo '' && ll *.css.gz && rm *.gz"
-alias pa="git remote | xargs -L1 git push --all"
 alias rr="git add . && git commit -m '#wip testing in remote' && git push"
-alias fad="fastapi dev main.py"
 
 # Opens default editor with the files or with the changed git files if able.
 function e
@@ -130,36 +117,6 @@ function c
 function visit
 {
   curl -kLs $1 | highlight --syntax html -O xterm256 | less
-}
-
-# Set a task in the One Thing extension
-function task
-{
-  gsettings --schemadir ~/.local/share/gnome-shell/extensions/one-thing@github.com/schemas \
-    set org.gnome.shell.extensions.one-thing thing-value "'${*}'"
-}
-
-# Login to Salesforce
-function sflogin
-{
-  local instance_url=${2:-https://test.salesforce.com}
-  sf auth web login --instance-url $instance_url --alias $1
-}
-
-# Fetch the package.xml.log metadata of the Salesforce project
-function sfget
-{
-  local manifest_file=${2:-package.xml.log}
-  sf project retrieve start --manifest $manifest_file --target-org $1
-}
-
-# Fetch all the metadata of the Salesforce project
-function sfall
-{
-  mkdir -p mdapioutput
-  sf project convert source --source-dir . --output-dir mdapioutput/
-  sfget $1 mdapioutput/package.xml
-  rm -rf mdapioutput
 }
 
 # Start the project
