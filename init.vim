@@ -169,8 +169,6 @@ autocmd BufNewFile,BufRead *.lol set filetype=lol
 autocmd BufNewFile,BufRead *.h set filetype=c
 autocmd BufNewFile,BufRead *.asm set filetype=nasm
 
-autocmd BufNewFile *pages/*.md 0r ~/.vim/skeletons/blog-post.md
-
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 " => Text, tab and indent related
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
