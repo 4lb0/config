@@ -92,20 +92,24 @@ alias css.gz="npm run css-min > /dev/null && cp dist/*.css . && gzip --best *.cs
 alias rr="git add . && git commit -m '#wip testing in remote' && git push"
 
 # Opens default editor with the files or with the changed git files if able.
-function e
-{
+function e {
   if [ $# -lt 1 ]; then
-    test -d .git && \
-      (test -f .gitignore \
-        && git ls-files -zmo --exclude-from=.gitignore \
-        || git ls-files -zmo) \
-      | xargs -0 file -i | grep -v binary \
-      | awk  -F ':' 'BEGIN{ORS="\0"} {print $1}' | xargs -0 $EDITOR \
-      || $EDITOR
-  else
-    $EDITOR ${*}
+    if test -d .git; then
+      if test -f .gitignore; then
+        git ls-files -zmo --exclude-from=.gitignore | tr '\0' '\n' > /tmp/e_git_files
+      else
+        git ls-files -zmo | tr '\0' '\n' > /tmp/e_git_files
+      fi
+      xargs file -i < /tmp/e_git_files | grep -v binary | awk -F ':' '{print $1}' > /tmp/e_files_to_edit
+      if [ -s /tmp/e_files_to_edit ]; then
+        xargs $EDITOR < /tmp/e_files_to_edit
+        return
+      fi
+    fi
   fi
+  $EDITOR "$@"
 }
+
 
 # Alias to add and commit, no need to put quotes for the message
 function c
