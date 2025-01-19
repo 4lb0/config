@@ -38,33 +38,33 @@ set showtabline=2
 set noshowmode
 
 function! CocCurrentFunction()
-    return get(b:, 'coc_current_function', '')
+  return get(b:, 'coc_current_function', '')
 endfunction
 
 let g:lightline = {
-\   'colorscheme': 'darcula',
-\   'active': {
-\    'left': [ [ 'mode', 'paste' ], ['readonly', 'filename', 'modified' ], [ 'cocstatus', 'currentfunction', 'codeium'] ]
-\   },
-\   'tabline': {
-\    'left': [ ['buffers'] ],
-\    'right': [ ['close'] ]
-\   },
-\   'component_function': {
-\    'cocstatus': 'coc#status',
-\    'currentfunction': 'CocCurrentFunction',
-\    'codeium': 'codeium#GetStatusString'
-\   },
-\   'component_expand': {
-\    'buffers': 'lightline#bufferline#buffers'
-\   },
-\   'component_type': {
-\     'buffers': 'tabsel'
-\   }
-\ }
+      \   'colorscheme': 'darcula',
+      \   'active': {
+      \    'left': [ [ 'mode', 'paste' ], ['readonly', 'filename', 'modified' ], [ 'cocstatus', 'currentfunction', 'codeium'] ]
+      \   },
+      \   'tabline': {
+      \    'left': [ ['buffers'] ],
+      \    'right': [ ['close'] ]
+      \   },
+      \   'component_function': {
+      \    'cocstatus': 'coc#status',
+      \    'currentfunction': 'CocCurrentFunction',
+      \    'codeium': 'codeium#GetStatusString'
+      \   },
+      \   'component_expand': {
+      \    'buffers': 'lightline#bufferline#buffers'
+      \   },
+      \   'component_type': {
+      \     'buffers': 'tabsel'
+      \   }
+      \ }
 
 if !has('gui_running')
-    set t_Co=256
+  set t_Co=256
 endif
 syntax enable
 
@@ -83,7 +83,7 @@ inoremap <expr><S-TAB> coc#pum#visible() ? coc#pum#prev(1) : "\<C-h>"
 
 " Make <CR> to accept selected completion item or notify coc.nvim to format
 inoremap <silent><expr> <CR> coc#pum#visible() ? coc#pum#confirm()
-                              \: "\<C-g>u\<CR>\<c-r>=coc#on_enter()\<CR>"
+      \: "\<C-g>u\<CR>\<c-r>=coc#on_enter()\<CR>"
 
 function! CheckBackspace() abort
   let col = col('.') - 1
@@ -206,9 +206,9 @@ nnoremap <silent> <tab> :bnext<CR>
 nnoremap <silent> <s-tab> :bprevious<CR>
 " close buffer and go to previous one if exists
 nnoremap <silent> q :
-\ if len(getbufinfo({'buflisted':1})) > 1  <BAR>
-\   bprevious <BAR>
-\   bdelete # <BAR>
-\ else <BAR>
-\   bdelete <BAR>
-\ endif <CR>
+      \ if len(getbufinfo({'buflisted':1})) > 1  <BAR>
+      \   bprevious <BAR>
+      \   bdelete # <BAR>
+      \ else <BAR>
+      \   bdelete <BAR>
+      \ endif <CR>
