@@ -12,18 +12,15 @@ Plug 'dracula/vim', { 'as': 'dracula' }
 " IDE
 Plug 'junegunn/fzf', { 'do': { -> fzf#install() } }
 Plug 'junegunn/fzf.vim'
-Plug 'dense-analysis/ale'
 Plug 'tpope/vim-commentary'
 Plug 'tpope/vim-fugitive'
 Plug 'neoclide/coc.nvim', {'branch': 'release'}
-Plug 'mhartington/formatter.nvim'
 Plug 'editorconfig/editorconfig-vim'
 Plug 'Exafunction/codeium.vim'
 
 " Type related
 Plug 'leafgarland/typescript-vim', { 'for': 'typescript' }
 Plug 'maxmellon/vim-jsx-pretty'
-Plug 'nelsyeung/twig.vim', { 'for': 'twig' }
 Plug 'cespare/vim-toml', { 'for': 'toml', 'branch': 'main' }
 Plug 'bialet/bialet.vim', { 'for': 'wren' }
 
@@ -164,7 +161,6 @@ autocmd BufNewFile,BufRead *.ts, *.tsx set filetype=typescript
 autocmd BufNewFile,BufRead *.php,*.java,*.c setlocal shiftwidth=4 tabstop=4
 autocmd BufNewFile,BufRead *.hwt set filetype=hwt
 autocmd BufNewFile,BufRead *.blt set filetype=bialet
-autocmd BufNewFile,BufRead *.abar set filetype=abar
 autocmd BufNewFile,BufRead *.lol set filetype=lol
 autocmd BufNewFile,BufRead *.h set filetype=c
 autocmd BufNewFile,BufRead *.asm set filetype=nasm
@@ -195,7 +191,6 @@ nnoremap <silent> m :set relativenumber!<CR>
 " Git
 nnoremap gs :Git status<CR>
 nnoremap gb :Git blame<CR>
-nnoremap <silent> <leader>r :wa <BAR>Git add . <BAR>Git commit --message="#wip testing in remote" --quiet<BAR>Git push --quiet<CR>
 nnoremap <silent> <leader>c :make<CR>
 " Tests
 nnoremap <silent> <leader>t :TestSuite<CR>
@@ -217,28 +212,3 @@ nnoremap <silent> q :
 \ else <BAR>
 \   bdelete <BAR>
 \ endif <CR>
-
-"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-" => JS Standard https://standardjs.com/#vim
-"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-let g:ale_linters = {
-\  'javascript': ['prettier', 'standard'],
-\  'html': ['prettier', 'tidy'],
-\  'typescript': ['prettier', 'tslint'],
-\  'c': ['clang-format'],
-\  'python': ['pylint'],
-\}
-let g:ale_fixers = {
-\   '*': ['remove_trailing_lines', 'trim_whitespace'],
-\  'javascript': ['prettier', 'standard'],
-\  'html': ['prettier', 'tidy'],
-\  'typescript': ['prettier', 'tslint'],
-\  'c': ['clang-format'],
-\  'rust': ['rustfmt'],
-\}
-let g:ale_lint_on_save = 1
-let g:ale_fix_on_save = 0
-
-let g:ale_typescript_tslint_use_global = 0
-
-nnoremap <silent> ff :ALEFix<CR>
