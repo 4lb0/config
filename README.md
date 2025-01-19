@@ -1,7 +1,7 @@
 Config
 ======
 
-This repository contains my set up. I use Ubuntu and iOS on a daily basis.
+This repository contains my set up. I use Ubuntu and macOS on a daily basis.
 
 ![Neovim in GNOME Terminal screenshot](https://github.com/4lb0/config/assets/142173/4dfa1e9e-9f69-4486-a0ea-bf6c2ddcba3d)
 
@@ -14,13 +14,8 @@ Apps
   and [fzf](https://github.com/junegunn/fzf)
 * **Editor:** [Neovim](https://neovim.io/)
 * **Version control:** [git](https://git-scm.com/)
-
-The rest of the apps I used but the configuration is not saved in this repository.
-
 * **Browser:** [Firefox](https://firefox.com/)
-* **Email client:** [Thunderbird](https://www.thunderbird.net/)
-* **Note-taking:** [Standard Notes](https://standardnotes.com/)
-* **Spell checker:** [LanguageTool](https://languagetool.org/)
+* **Email client:** [Thunderbird](https://www.thunderbird.net/) or [macOS Mail](https://support.apple.com/guide/mail/welcome/mac)
 
 Theme
 -----
