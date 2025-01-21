@@ -16,6 +16,7 @@ Apps
 * **Version control:** [git](https://git-scm.com/)
 * **Browser:** [Firefox](https://firefox.com/)
 * **Email client:** [Thunderbird](https://www.thunderbird.net/) or [macOS Mail](https://support.apple.com/guide/mail/welcome/mac)
+* **Note taking:** [GitJournal](https://gitjournal.io/)
 
 Theme
 -----
