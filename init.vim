@@ -94,6 +94,7 @@ endfunction
 inoremap <silent><expr> <c-space> coc#refresh()
 
 " GoTo code navigation
+nmap <silent> ga <Plug>(coc-codeaction-cursor)
 nmap <silent> gd <Plug>(coc-definition)
 nmap <silent> gy <Plug>(coc-type-definition)
 nmap <silent> gi <Plug>(coc-implementation)
@@ -101,6 +102,8 @@ nmap <silent> gr <Plug>(coc-references)
 
 " Apply fix
 nmap qf <Plug>(coc-fix-current)
+
+nmap <C-space> :CocCommand<CR>
 
 " Highlight the symbol and its references when holding the cursor
 autocmd CursorHold * silent call CocActionAsync('highlight')
