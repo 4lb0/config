@@ -187,8 +187,8 @@ set nofoldenable " Prevent folding
 " => Custom mappings
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 let mapleader = ","
-" Move pastetoggle to F3 because guake uses F2
-set pastetoggle=<F3>
+nnoremap <silent> <F3> :set paste!<cr>
+inoremap <silent> <F3> <esc>:set paste!<cr>i
 " Toggle relative numbers line
 nnoremap <silent> m :set relativenumber!<CR>
 " Git
