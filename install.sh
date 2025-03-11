@@ -6,3 +6,4 @@ ln -sf $CONFIG_PATH/.gitconfig ~/.gitconfig
 ln -sf $CONFIG_PATH/.tmux.conf ~/.tmux.conf
 ln -sf $CONFIG_PATH/konsole ~/.local/share/konsole
 ln -sf $CONFIG_PATH/ssh_config ~/.ssh/config
+touch $CONFIG_PATH/.ssh/private_config

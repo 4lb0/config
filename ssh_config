@@ -3,5 +3,4 @@ Host *
    UserKnownHostsFile=/dev/null
    LogLevel ERROR
 
-Host gitlab.gnome.org
-  Hostname ssh.gitlab.gnome.org
+Include private_config
