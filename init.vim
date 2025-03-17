@@ -167,6 +167,7 @@ autocmd BufNewFile,BufRead *.blt set filetype=bialet
 autocmd BufNewFile,BufRead *.lol set filetype=lol
 autocmd BufNewFile,BufRead *.h set filetype=c
 autocmd BufNewFile,BufRead *.asm set filetype=nasm
+autocmd BufNewFile,BufRead *.prg set filetype=prg
 
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 " => Text, tab and indent related
@@ -195,6 +196,7 @@ nnoremap <silent> m :set relativenumber!<CR>
 nnoremap gs :Git status<CR>
 nnoremap gb :Git blame<CR>
 nnoremap <silent> <leader>c :make<CR>
+nnoremap <leader>s :Git add . \| Git commit -m "wip" \| Git pull --rebase \| Git push<CR>
 " Tests
 nnoremap <silent> <leader>t :TestSuite<CR>
 " Fzf
