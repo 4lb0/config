@@ -16,7 +16,7 @@ Plug 'tpope/vim-commentary'
 Plug 'tpope/vim-fugitive'
 Plug 'neoclide/coc.nvim', {'branch': 'release'}
 Plug 'editorconfig/editorconfig-vim'
-Plug 'Exafunction/codeium.vim'
+Plug 'Exafunction/windsurf.vim', { 'branch': 'main' }
 
 " Type related
 Plug 'leafgarland/typescript-vim', { 'for': 'typescript' }
