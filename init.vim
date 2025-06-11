@@ -1,6 +1,4 @@
-if !$TERM_PROGRAM =~ "Apple_Terminal"
-  set termguicolors
-endif
+set termguicolors
 
 call plug#begin('~/.vim/plugged')
 
