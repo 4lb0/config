@@ -141,3 +141,7 @@ SF_AC_ZSH_SETUP_PATH=/home/albo/.cache/sf/autocomplete/zsh_setup && test -f $SF_
 # pnpm
 export PNPM_HOME="$HOME/.local/share/pnpm"
 export PATH="$PNPM_HOME:$PATH"
+
+# pausa
+export PAUSA_HOME="$HOME/work/pausa/dev-utils/bin"
+export PATH="$PAUSA_HOME:$PATH"
