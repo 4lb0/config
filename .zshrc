@@ -131,7 +131,7 @@ function start() {
   elif [[ -f "pnpm-lock.yaml" ]]; then
     pnpm dev
   else
-    echo -e "\e[31mNo recognized project to start\e[0m"
+    bialet
   fi
 }
 
