@@ -14,7 +14,6 @@ Plug 'tpope/vim-commentary'
 Plug 'tpope/vim-fugitive'
 Plug 'neoclide/coc.nvim', {'branch': 'release'}
 Plug 'editorconfig/editorconfig-vim'
-Plug 'Exafunction/windsurf.vim', { 'branch': 'main' }
 Plug 'github/copilot.vim'
 
 " Type related
