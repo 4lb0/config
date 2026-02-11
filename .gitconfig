@@ -11,11 +11,12 @@
   pager = delta
 
 [interactive]
-    diffFilter = delta --color-only
+  diffFilter = delta --color-only
 
 # https://github.com/dandavison/delta#get-started
 [delta]
-    navigate = true
+  navigate = true
+  side-by-side = true
 
 [merge]
     conflictstyle = zdiff3
@@ -44,18 +45,6 @@
 
 [credential]
   helper = cache --timeout=3600000
-
-[diff]
-  tool = difftastic
-
-[difftool]
-  prompt = false
-
-[difftool "difftastic"]
-  cmd = difft "$LOCAL" "$REMOTE"
-
-[pager]
-  difftool = true
 
 [push]
   default = current
