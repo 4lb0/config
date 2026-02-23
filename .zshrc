@@ -135,6 +135,21 @@ function start() {
   fi
 }
 
+# Use / command generator using Ollama
+function '/'() {
+  local prompt="$*"
+  local system_prompt="You are a command-line assistant. Given a user request in natural language, respond with ONLY the exact shell command to accomplish it. No explanations, no markdown, no code blocks, just the raw command."
+  local response=$(ollama run qwen2.5-coder:1.5b "${system_prompt}
+
+User request: ${prompt}
+
+Command:")
+  # Remove any markdown code blocks if present
+  response=$(echo "$response" | sed 's/```bash//g; s/```sh//g; s/```//g' | tr -d '\n' | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')
+  # Push to zsh buffer (appears on command line ready to execute)
+  print -z "$response"
+}
+
 eval
 SF_AC_ZSH_SETUP_PATH=/home/albo/.cache/sf/autocomplete/zsh_setup && test -f $SF_AC_ZSH_SETUP_PATH && source $SF_AC_ZSH_SETUP_PATH; # sf autocomplete setup
 
