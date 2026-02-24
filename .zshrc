@@ -102,8 +102,10 @@ function e {
         git ls-files -zmo | tr '\0' '\n' > /tmp/e_git_files
       fi
       xargs file -i < /tmp/e_git_files | grep -v binary | awk -F ':' '{print $1}' > /tmp/e_files_to_edit
-      if [ -s /tmp/e_files_to_edit ]; then
-        xargs $EDITOR < /tmp/e_files_to_edit
+      grep -v '\.claude' /tmp/e_files_to_edit > /tmp/e_files_to_edit_filtered
+      if [ -s /tmp/e_files_to_edit_filtered ]; then
+        # Remove .claude files
+        xargs $EDITOR < /tmp/e_files_to_edit_filtered
         return
       fi
     fi
