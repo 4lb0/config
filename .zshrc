@@ -87,7 +87,7 @@ alias df="df -h"
 alias gs="git status"
 
 # Aliases
-alias upd="omz update & sudo snap refresh & nvim +PlugUpdate +qall & sudo sh -c 'apt update && apt dist-upgrade -y && apt autoremove -y' & (npm install npm@latest -g &&  npm update -g) &"
+alias upd='omz update & nvim +PlugUpdate +qall & (npm install npm@latest -g && npm update -g) & if [[ "$(uname)" == "Darwin" ]]; then brew update && brew upgrade && brew autoremove && brew cleanup; else sudo snap refresh & sudo sh -c "apt update && apt dist-upgrade -y && apt autoremove -y"; fi'
 alias css.br="npm run css-min > /dev/null && cp dist/*.css . && brotli -f *.css && ls -l *.css.br && echo '' && ll *.css.br && rm *.css && rm *.br"
 alias css.gz="npm run css-min > /dev/null && cp dist/*.css . && gzip --best *.css && ls -l *.css.gz && echo '' && ll *.css.gz && rm *.gz"
 alias rr="git add . && git commit -m '#wip testing in remote' && git push"
