@@ -9,6 +9,7 @@
   editor = nvim
   autocrlf = false
   pager = delta
+  excludesFile = ~/config/gitignore
 
 [interactive]
   diffFilter = delta --color-only
