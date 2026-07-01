@@ -1,0 +1,15 @@
+{
+  "$schema": "https://opencode.ai/tui.json",
+  "theme": "dracula",
+  "leader_timeout": 1500,
+  "keybinds": {
+    "leader": ","
+  },
+  "mouse": true,
+  "attention": {
+    "enabled": true,
+    "notifications": true,
+    "sound": true,
+    "volume": 1
+  }
+}

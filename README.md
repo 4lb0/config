@@ -13,6 +13,7 @@ Apps
 * **Shell:** [zsh](https://www.zsh.org/), with [Oh My Zsh](https://ohmyz.sh/)
   and [fzf](https://github.com/junegunn/fzf)
 * **Editor:** [Neovim](https://neovim.io/)
+* **Coding Agent Tool:** [OpenCode](https://opencode.ai/)
 * **Version control:** [git](https://git-scm.com/)
 * **Browser:** [Firefox](https://firefox.com/)
 * **Email client:** [Thunderbird](https://www.thunderbird.net/) or [macOS Mail](https://support.apple.com/guide/mail/welcome/mac)

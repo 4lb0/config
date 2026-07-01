@@ -7,4 +7,7 @@ ln -sf $CONFIG_PATH/.tmux.conf ~/.tmux.conf
 ln -sf $CONFIG_PATH/konsole ~/.local/share/konsole
 ln -sf $CONFIG_PATH/ssh_config ~/.ssh/config
 ln -sf $CONFIG_PATH/.prettierrc ~/.prettierrc
-touch $CONFIG_PATH/.ssh/private_config
+mkdir -p ~/.config/opencode
+ln -sf $CONFIG_PATH/opencode.json ~/.config/opencode/opencode.json
+ln -sf $CONFIG_PATH/opencode-tui.json ~/.config/opencode/tui.json
+touch ~/.ssh/private_config
