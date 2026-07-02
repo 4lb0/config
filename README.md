@@ -3,7 +3,7 @@ Config
 
 This repository contains my set up. I use Ubuntu and macOS on a daily basis.
 
-![Neovim in GNOME Terminal screenshot](https://github.com/4lb0/config/assets/142173/4dfa1e9e-9f69-4486-a0ea-bf6c2ddcba3d)
+<img width="1392" height="910" alt="image" src="https://github.com/user-attachments/assets/b08e39f4-c7b0-44d9-8886-869a7cb494d5" />
 
 Apps
 ----
