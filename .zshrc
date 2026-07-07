@@ -162,6 +162,5 @@ eval "$(tirith init)"
 export PNPM_HOME="$HOME/.local/share/pnpm"
 export PATH="$PNPM_HOME:$PATH"
 
-# pausa
-export PAUSA_HOME="$HOME/work/pausa/dev-utils/bin"
-export PATH="$PAUSA_HOME:$PATH"
+# Scripts de desarrollo Pausa
+export PATH="$PATH:/Users/albo/work/pausa/dev-utils/bin"
