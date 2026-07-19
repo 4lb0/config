@@ -3,7 +3,7 @@
   "theme": "dracula",
   "leader_timeout": 1500,
   "keybinds": {
-    "leader": ","
+    "leader": ";"
   },
   "mouse": true,
   "attention": {
