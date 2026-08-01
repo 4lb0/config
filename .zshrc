@@ -152,11 +152,10 @@ Command:")
   print -z "$response"
 }
 
-eval
 SF_AC_ZSH_SETUP_PATH=/home/albo/.cache/sf/autocomplete/zsh_setup && test -f $SF_AC_ZSH_SETUP_PATH && source $SF_AC_ZSH_SETUP_PATH; # sf autocomplete setup
 
 # Prevent homograph attacks https://github.com/sheeki03/tirith
-eval "$(tirith init)"
+command -v tirith >/dev/null && eval "$(tirith init)"
 
 # pnpm
 export PNPM_HOME="$HOME/.local/share/pnpm"
