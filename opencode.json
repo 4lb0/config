@@ -1,8 +1,10 @@
 {
   "$schema": "https://opencode.ai/config.json",
   "plugin": [
-    "@mohak34/opencode-notifier@latest"
+    "@mohak34/opencode-notifier@latest",
+    "/Users/albo/.nvm/versions/node/v22.21.1/lib/node_modules/@rynfar/meridian/plugin/meridian.ts"
   ],
+  "lsp": {},
   "permission": {
     "*": "allow",
     "bash": {
