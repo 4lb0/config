@@ -104,8 +104,8 @@ function e {
       xargs file -i < /tmp/e_git_files | grep -v binary | awk -F ':' '{print $1}' > /tmp/e_files_to_edit
       grep -v '\.claude' /tmp/e_files_to_edit > /tmp/e_files_to_edit_filtered
       if [ -s /tmp/e_files_to_edit_filtered ]; then
-        # Remove .claude files
-        xargs $EDITOR < /tmp/e_files_to_edit_filtered
+        # Remove .claude files, cap at 10 to avoid opening too many buffers
+        head -n 10 /tmp/e_files_to_edit_filtered | xargs $EDITOR
         return
       fi
     fi
