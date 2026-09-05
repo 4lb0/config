@@ -13,20 +13,6 @@ elif [ -s "$NVM_DIR/nvm.sh" ]; then
   [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"
 fi
 
-# Python Virtualenv
-autoload -U add-zsh-hook
-
-function auto_activate_venv() {
-  if [[ -f .venv/bin/activate ]]; then
-    source .venv/bin/activate
-  elif [[ -n $VIRTUAL_ENV ]]; then
-    deactivate  # Deactivate if we leave the directory
-  fi
-}
-
-add-zsh-hook chpwd auto_activate_venv
-auto_activate_venv  # Trigger on initial shell start
-
 # Path to your oh-my-zsh installation.
 export ZSH="$HOME/.oh-my-zsh"
 
