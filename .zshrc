@@ -1,7 +1,17 @@
+# Powerlevel10k instant prompt (must stay at the very top of .zshrc)
+if [[ -r "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh" ]]; then
+  source "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh"
+fi
+
 export NPM_PACKAGES="$HOME/.npm_packages"
 export RUBY_LOCAL="$HOME/.gem/ruby/2.7.0/bin"
 
 export PATH=$HOME/bin:$HOME/.local/bin:/usr/local/bin:$NPM_PACKAGES/bin:$RUBY_LOCAL:$PATH
+
+# Zsh config (replaces oh-my-zsh, see zsh/README.md)
+for f in completion keybindings directories history misc termsupport z per-directory-history; do
+  source "$HOME/config/zsh/$f.zsh"
+done
 
 # NVM setup
 export NVM_DIR="$HOME/.nvm"
@@ -12,26 +22,6 @@ elif [ -s "$NVM_DIR/nvm.sh" ]; then
   \. "$NVM_DIR/nvm.sh" --no-use
   [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"
 fi
-
-# Path to your oh-my-zsh installation.
-export ZSH="$HOME/.oh-my-zsh"
-
-# Set name of the theme to load --- if set to "random", it will
-# load a random theme each time oh-my-zsh is loaded, in which case,
-# to know which specific one was loaded, run: echo $RANDOM_THEME
-# See https://github.com/ohmyzsh/ohmyzsh/wiki/Themes
-ZSH_THEME=""
-
-# Uncomment the following line to automatically update without prompting.
-DISABLE_UPDATE_PROMPT="true"
-
-
-# Uncomment the following line to enable command auto-correction.
-# ENABLE_CORRECTION="true"
-
-plugins=(fzf z per-directory-history)
-
-source $ZSH/oh-my-zsh.sh
 
 # User configuration
 
@@ -67,6 +57,18 @@ fi
 # FZF Dracula Theme
 export FZF_DEFAULT_OPTS='--color=fg:#f8f8f2,bg:#282a36,hl:#bd93f9 --color=fg+:#f8f8f2,bg+:#44475a,hl+:#bd93f9 --color=info:#ffb86c,prompt:#50fa7b,pointer:#ff79c6 --color=marker:#ff79c6,spinner:#ffb86c,header:#6272a4'
 
+# fzf shell integration: Ctrl-R history, Ctrl-T file finder, Alt-C cd (replaces oh-my-zsh's fzf plugin)
+eval "$(fzf --zsh)"
+if [[ -z "$FZF_DEFAULT_COMMAND" ]]; then
+  if (( $+commands[fd] )); then
+    export FZF_DEFAULT_COMMAND='fd --type f --hidden --exclude .git'
+  elif (( $+commands[rg] )); then
+    export FZF_DEFAULT_COMMAND='rg --files --hidden --glob "!.git/*"'
+  elif (( $+commands[ag] )); then
+    export FZF_DEFAULT_COMMAND='ag -l --hidden -g "" --ignore .git'
+  fi
+fi
+
 # Disable docker-compose suggestion https://github.com/docker/scan-cli-plugin/issues/149
 export DOCKER_SCAN_SUGGEST=false
 
@@ -82,7 +84,7 @@ function gst { git status "$@" }
 function gd { git diff "$@" }
 
 # Aliases
-alias upd='omz update & nvim +PlugUpdate +qall & (npm install npm@latest -g && npm update -g) & if [[ "$(uname)" == "Darwin" ]]; then brew update && brew upgrade && brew autoremove && brew cleanup; else sudo snap refresh & sudo sh -c "apt update && apt dist-upgrade -y && apt autoremove -y"; fi'
+alias upd='nvim +PlugUpdate +qall & (npm install npm@latest -g && npm update -g) & if [[ "$(uname)" == "Darwin" ]]; then brew update && brew upgrade && brew autoremove && brew cleanup; else sudo snap refresh & sudo sh -c "apt update && apt dist-upgrade -y && apt autoremove -y"; fi'
 alias css.br="npm run css-min > /dev/null && cp dist/*.css . && brotli -f *.css && ls -l *.css.br && echo '' && ll *.css.br && rm *.css && rm *.br"
 alias css.gz="npm run css-min > /dev/null && cp dist/*.css . && gzip --best *.css && ls -l *.css.gz && echo '' && ll *.css.gz && rm *.gz"
 alias rr="git add . && git commit -m '#wip testing in remote' && git push"
@@ -159,5 +161,6 @@ export PATH="$PNPM_HOME:$PATH"
 # Scripts de desarrollo Pausa
 [ -d "/Users/albo/work/pausa/dev-utils/bin" ] && export PATH="$PATH:/Users/albo/work/pausa/dev-utils/bin"
 
-# Starship prompt (replaces oh-my-zsh's agnoster theme, no per-prompt git subprocess spam)
-eval "$(starship init zsh)"
+# Powerlevel10k prompt (replaces oh-my-zsh's agnoster theme, no per-prompt git subprocess spam)
+source /opt/homebrew/share/powerlevel10k/powerlevel10k.zsh-theme
+[[ -f ~/.p10k.zsh ]] && source ~/.p10k.zsh
