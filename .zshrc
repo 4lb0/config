@@ -20,7 +20,7 @@ export ZSH="$HOME/.oh-my-zsh"
 # load a random theme each time oh-my-zsh is loaded, in which case,
 # to know which specific one was loaded, run: echo $RANDOM_THEME
 # See https://github.com/ohmyzsh/ohmyzsh/wiki/Themes
-ZSH_THEME="agnoster"
+ZSH_THEME=""
 
 # Uncomment the following line to automatically update without prompting.
 DISABLE_UPDATE_PROMPT="true"
@@ -29,7 +29,7 @@ DISABLE_UPDATE_PROMPT="true"
 # Uncomment the following line to enable command auto-correction.
 # ENABLE_CORRECTION="true"
 
-plugins=(fzf z docker-compose per-directory-history)
+plugins=(fzf z per-directory-history)
 
 source $ZSH/oh-my-zsh.sh
 
@@ -158,3 +158,6 @@ export PATH="$PNPM_HOME:$PATH"
 
 # Scripts de desarrollo Pausa
 [ -d "/Users/albo/work/pausa/dev-utils/bin" ] && export PATH="$PATH:/Users/albo/work/pausa/dev-utils/bin"
+
+# Starship prompt (replaces oh-my-zsh's agnoster theme, no per-prompt git subprocess spam)
+eval "$(starship init zsh)"
