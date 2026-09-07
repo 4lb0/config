@@ -29,7 +29,7 @@ DISABLE_UPDATE_PROMPT="true"
 # Uncomment the following line to enable command auto-correction.
 # ENABLE_CORRECTION="true"
 
-plugins=(git fzf z docker-compose per-directory-history)
+plugins=(fzf z docker-compose per-directory-history)
 
 source $ZSH/oh-my-zsh.sh
 
@@ -76,6 +76,10 @@ alias less="less -r"
 alias df="df -h"
 # This alias is to prevent to keep opening GhostScript
 alias gs="git status"
+
+# Git shortcuts (replacement for oh-my-zsh's git plugin, only these two are used)
+function gst { git status "$@" }
+function gd { git diff "$@" }
 
 # Aliases
 alias upd='omz update & nvim +PlugUpdate +qall & (npm install npm@latest -g && npm update -g) & if [[ "$(uname)" == "Darwin" ]]; then brew update && brew upgrade && brew autoremove && brew cleanup; else sudo snap refresh & sudo sh -c "apt update && apt dist-upgrade -y && apt autoremove -y"; fi'
