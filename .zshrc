@@ -76,18 +76,14 @@ export DOCKER_SCAN_SUGGEST=false
 alias ag="ag --ignore \"*.bundle\" --ignore \"*.sql\" -i --color"
 alias less="less -r"
 alias df="df -h"
-# This alias is to prevent to keep opening GhostScript
-alias gs="git status"
 
-# Git shortcuts (replacement for oh-my-zsh's git plugin, only these two are used)
+# Git shortcuts
 function gst { git status "$@" }
 function gd { git diff "$@" }
+function c { git add . && git commit -m "${*}" }
 
 # Aliases
 alias upd='nvim +PlugUpdate +qall & (npm install npm@latest -g && npm update -g) & if [[ "$(uname)" == "Darwin" ]]; then brew update && brew upgrade && brew autoremove && brew cleanup; else sudo snap refresh & sudo sh -c "apt update && apt dist-upgrade -y && apt autoremove -y"; fi'
-alias css.br="npm run css-min > /dev/null && cp dist/*.css . && brotli -f *.css && ls -l *.css.br && echo '' && ll *.css.br && rm *.css && rm *.br"
-alias css.gz="npm run css-min > /dev/null && cp dist/*.css . && gzip --best *.css && ls -l *.css.gz && echo '' && ll *.css.gz && rm *.gz"
-alias rr="git add . && git commit -m '#wip testing in remote' && git push"
 
 # Opens default editor with the files or with the changed git files if able.
 function e {
@@ -110,19 +106,6 @@ function e {
   $EDITOR "$@"
 }
 
-
-# Alias to add and commit, no need to put quotes for the message
-function c
-{
-  git add .
-  git commit -m "${*}"
-}
-
-function visit
-{
-  curl -kLs $1 | highlight --syntax html -O xterm256 | less
-}
-
 # Start the project
 function start() {
   if [[ -f "main.py" ]]; then
@@ -134,25 +117,7 @@ function start() {
   fi
 }
 
-# Use / command generator using Ollama
-function '/'() {
-  local prompt="$*"
-  local system_prompt="You are a command-line assistant. Given a user request in natural language, respond with ONLY the exact shell command to accomplish it. No explanations, no markdown, no code blocks, just the raw command."
-  local response=$(ollama run qwen2.5-coder:1.5b "${system_prompt}
-
-User request: ${prompt}
-
-Command:")
-  # Remove any markdown code blocks if present
-  response=$(echo "$response" | sed 's/```bash//g; s/```sh//g; s/```//g' | tr -d '\n' | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')
-  # Push to zsh buffer (appears on command line ready to execute)
-  print -z "$response"
-}
-
 SF_AC_ZSH_SETUP_PATH=/home/albo/.cache/sf/autocomplete/zsh_setup && test -f $SF_AC_ZSH_SETUP_PATH && source $SF_AC_ZSH_SETUP_PATH; # sf autocomplete setup
-
-# Prevent homograph attacks https://github.com/sheeki03/tirith
-command -v tirith >/dev/null && eval "$(tirith init)"
 
 # pnpm
 export PNPM_HOME="$HOME/.local/share/pnpm"
