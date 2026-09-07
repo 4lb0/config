@@ -11,7 +11,7 @@ Apps
 * **Terminal:** [Konsole](https://konsole.kde.org/),
   or [iTerm2](https://iterm2.com/) with [tmux](https://github.com/tmux/tmux/wiki)
 * **Shell:** [zsh](https://www.zsh.org/) (no framework, see `zsh/`),
-  with [Starship](https://starship.rs/) and [fzf](https://github.com/junegunn/fzf)
+  with [Powerlevel10k](https://github.com/romkatv/powerlevel10k) and [fzf](https://github.com/junegunn/fzf)
 * **Editor:** [Neovim](https://neovim.io/)
 * **Coding Agent Tool:** [OpenCode](https://opencode.ai/)
 * **Version control:** [git](https://git-scm.com/)

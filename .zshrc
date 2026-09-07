@@ -1,3 +1,8 @@
+# Powerlevel10k instant prompt (must stay at the very top of .zshrc)
+if [[ -r "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh" ]]; then
+  source "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh"
+fi
+
 export NPM_PACKAGES="$HOME/.npm_packages"
 export RUBY_LOCAL="$HOME/.gem/ruby/2.7.0/bin"
 
@@ -156,5 +161,6 @@ export PATH="$PNPM_HOME:$PATH"
 # Scripts de desarrollo Pausa
 [ -d "/Users/albo/work/pausa/dev-utils/bin" ] && export PATH="$PATH:/Users/albo/work/pausa/dev-utils/bin"
 
-# Starship prompt (replaces oh-my-zsh's agnoster theme, no per-prompt git subprocess spam)
-eval "$(starship init zsh)"
+# Powerlevel10k prompt (replaces oh-my-zsh's agnoster theme, no per-prompt git subprocess spam)
+source /opt/homebrew/share/powerlevel10k/powerlevel10k.zsh-theme
+[[ -f ~/.p10k.zsh ]] && source ~/.p10k.zsh
