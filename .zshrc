@@ -82,8 +82,48 @@ function gst { git status "$@" }
 function gd { git diff "$@" }
 function c { git add . && git commit -m "${*}" }
 
-# Aliases
-alias upd='nvim +PlugUpdate +qall & (npm install npm@latest -g && npm update -g) & if [[ "$(uname)" == "Darwin" ]]; then brew update && brew upgrade && brew autoremove && brew cleanup; else sudo snap refresh & sudo sh -c "apt update && apt dist-upgrade -y && apt autoremove -y"; fi'
+# Update everything in parallel, non-interactively, with clean grouped output per job.
+function upd {
+  local is_mac=false
+  [[ "$(uname)" == "Darwin" ]] && is_mac=true
+
+  local tmpdir; tmpdir=$(mktemp -d)
+  local -a jobs=(nvim npm)
+  local -a pids=()
+
+  { nvim --headless +PlugUpdate +qall } &> "$tmpdir/nvim.log" &
+  pids+=($!)
+
+  { npm install npm@latest -g && npm update -g } &> "$tmpdir/npm.log" &
+  pids+=($!)
+
+  if $is_mac; then
+    jobs+=(brew)
+    { brew update && brew upgrade && brew autoremove && brew cleanup } &> "$tmpdir/brew.log" &
+    pids+=($!)
+  else
+    jobs+=(snap apt)
+    { sudo snap refresh } &> "$tmpdir/snap.log" &
+    pids+=($!)
+    # force-confdef/force-confold + noninteractive avoids the dpkg "keep or
+    # overwrite config file" prompt that -y alone does not suppress.
+    { sudo bash -c 'export DEBIAN_FRONTEND=noninteractive; apt update && apt dist-upgrade -y -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confold" && apt autoremove -y' } &> "$tmpdir/apt.log" &
+    pids+=($!)
+  fi
+
+  wait $pids
+
+  # Jobs write to their own log files, not the terminal, so printing the
+  # results here (after everything finished in parallel) never interleaves.
+  local job
+  for job in $jobs; do
+    print -P "%F{cyan}── $job ──%f"
+    cat "$tmpdir/$job.log"
+    echo
+  done
+
+  rm -rf "$tmpdir"
+}
 
 # Opens default editor with the files or with the changed git files if able.
 function e {
