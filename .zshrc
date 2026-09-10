@@ -76,6 +76,7 @@ export DOCKER_SCAN_SUGGEST=false
 alias ag="ag --ignore \"*.bundle\" --ignore \"*.sql\" -i --color"
 alias less="less -r"
 alias df="df -h"
+alias t="todo.sh"
 
 # Git shortcuts
 function gst { git status "$@" }
@@ -145,6 +146,12 @@ function e {
   fi
   $EDITOR "$@"
 }
+
+# Auto-activate Python venv on .venv folder
+_venv_auto_activate() { [[ -f ".venv/bin/activate" && "$VIRTUAL_ENV" != "$PWD/.venv" ]] && source ".venv/bin/activate"; }
+autoload -Uz add-zsh-hook
+add-zsh-hook chpwd _venv_auto_activate
+_venv_auto_activate
 
 # Start the project
 function start() {
