@@ -161,7 +161,7 @@ function start() {
   elif [[ -f "pnpm-lock.yaml" ]]; then
     pnpm dev
   else
-    bialet
+    bialet dev
   fi
 }
 
