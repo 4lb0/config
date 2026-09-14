@@ -81,6 +81,7 @@ alias t="todo.sh"
 # Git shortcuts
 function gst { git status "$@" }
 function gd { git diff "$@" }
+function gp { git fetch --all && git pull --rebase "$@" }
 function c { git add . && git commit -m "${*}" }
 
 # Update everything in parallel, non-interactively, with clean grouped output per job.
