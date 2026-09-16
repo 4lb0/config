@@ -5,6 +5,7 @@ ln -sf $CONFIG_PATH/.zshrc ~/.zshrc
 ln -sf $CONFIG_PATH/.gitconfig ~/.gitconfig
 ln -sf $CONFIG_PATH/.tmux.conf ~/.tmux.conf
 ln -sf $CONFIG_PATH/.p10k.zsh ~/.p10k.zsh
+[ -L ~/.local/share/konsole ] && rm ~/.local/share/konsole
 ln -sf $CONFIG_PATH/konsole ~/.local/share/konsole
 ln -sf $CONFIG_PATH/ssh_config ~/.ssh/config
 ln -sf $CONFIG_PATH/.prettierrc ~/.prettierrc
