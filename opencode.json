@@ -1,9 +1,6 @@
 {
   "$schema": "https://opencode.ai/config.json",
-  "plugin": [
-    "@mohak34/opencode-notifier@latest",
-    "/Users/albo/.nvm/versions/node/v22.21.1/lib/node_modules/@rynfar/meridian/plugin/meridian.ts"
-  ],
+  "plugin": ["@mohak34/opencode-notifier@latest"],
   "lsp": {},
   "permission": {
     "*": "allow",
@@ -34,7 +31,11 @@
       "brew install *": "ask",
       "ssh *": "ask",
       "scp *": "ask",
-      "rsync *": "ask"
+      "rsync *": "ask",
+      "* /tmp/*": "allow",
+      "* /tmp": "allow",
+      "*/tmp/*": "allow",
+      "/tmp/*": "allow"
     },
     "doom_loop": "ask",
     "external_directory": {
