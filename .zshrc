@@ -10,7 +10,7 @@ export PATH=$HOME/bin:$HOME/.local/bin:/usr/local/bin:$NPM_PACKAGES/bin:$RUBY_LO
 
 # Zsh config (replaces oh-my-zsh, see zsh/README.md)
 for f in completion keybindings directories history misc termsupport z per-directory-history; do
-  source "$HOME/config/zsh/$f.zsh"
+  source "$HOME/.config/zsh/$f.zsh"
 done
 
 # NVM setup
