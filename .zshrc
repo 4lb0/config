@@ -174,6 +174,9 @@ export PATH="$PNPM_HOME:$PATH"
 # Scripts de desarrollo Pausa
 [ -d "/Users/albo/work/pausa/dev-utils/bin" ] && export PATH="$PATH:/Users/albo/work/pausa/dev-utils/bin"
 
+# opencode
+export PATH="/home/albo/.opencode/bin:$PATH"
+
 # Powerlevel10k prompt (replaces oh-my-zsh's agnoster theme, no per-prompt git subprocess spam)
 source ~/.powerlevel10k/powerlevel10k.zsh-theme
 [[ -f ~/.p10k.zsh ]] && source ~/.p10k.zsh
