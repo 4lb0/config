@@ -54,20 +54,6 @@ if [ "$TERM" = "linux" ]; then
 	printf %b '\e]PFffffff'    # redefine 'bright-white'   as '#ffffff'
 	clear
 fi
-# FZF Dracula Theme
-export FZF_DEFAULT_OPTS='--color=fg:#f8f8f2,bg:#282a36,hl:#bd93f9 --color=fg+:#f8f8f2,bg+:#44475a,hl+:#bd93f9 --color=info:#ffb86c,prompt:#50fa7b,pointer:#ff79c6 --color=marker:#ff79c6,spinner:#ffb86c,header:#6272a4'
-
-# fzf shell integration: Ctrl-R history, Ctrl-T file finder, Alt-C cd (replaces oh-my-zsh's fzf plugin)
-eval "$(fzf --zsh)"
-if [[ -z "$FZF_DEFAULT_COMMAND" ]]; then
-  if (( $+commands[fd] )); then
-    export FZF_DEFAULT_COMMAND='fd --type f --hidden --exclude .git'
-  elif (( $+commands[rg] )); then
-    export FZF_DEFAULT_COMMAND='rg --files --hidden --glob "!.git/*"'
-  elif (( $+commands[ag] )); then
-    export FZF_DEFAULT_COMMAND='ag -l --hidden -g "" --ignore .git'
-  fi
-fi
 
 # Disable docker-compose suggestion https://github.com/docker/scan-cli-plugin/issues/149
 export DOCKER_SCAN_SUGGEST=false
