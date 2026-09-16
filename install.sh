@@ -11,5 +11,16 @@ ln -sf $CONFIG_PATH/.prettierrc ~/.prettierrc
 mkdir -p ~/.config/opencode
 ln -sf $CONFIG_PATH/opencode.json ~/.config/opencode/opencode.json
 ln -sf $CONFIG_PATH/opencode-tui.json ~/.config/opencode/tui.json
+[ -L ~/.config/zsh ] && rm ~/.config/zsh
 ln -sf $CONFIG_PATH/zsh ~/.config/zsh
+
+P10K_DIR="$HOME/.powerlevel10k"
+P10K_REPO="https://github.com/romkatv/powerlevel10k.git"
+
+if [ -d "$P10K_DIR/.git" ]; then
+  git -C "$P10K_DIR" pull --ff-only
+else
+  git clone --depth=1 "$P10K_REPO" "$P10K_DIR"
+fi
+
 touch ~/.ssh/private_config
