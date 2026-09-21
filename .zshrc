@@ -9,7 +9,7 @@ export RUBY_LOCAL="$HOME/.gem/ruby/2.7.0/bin"
 export PATH=$HOME/bin:$HOME/.local/bin:/usr/local/bin:$NPM_PACKAGES/bin:$RUBY_LOCAL:$PATH
 
 # Zsh config (replaces oh-my-zsh, see zsh/README.md)
-for f in completion keybindings directories history misc termsupport z per-directory-history; do
+for f in completion directories history misc z per-directory-history; do
   source "$HOME/.config/zsh/$f.zsh"
 done
 
