@@ -3,10 +3,17 @@ if [[ -r "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh" ]]
   source "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh"
 fi
 
-export NPM_PACKAGES="$HOME/.npm_packages"
-export RUBY_LOCAL="$HOME/.gem/ruby/2.7.0/bin"
+export DEFAULT_USER='albo'
 
-export PATH=$HOME/bin:$HOME/.local/bin:/usr/local/bin:$NPM_PACKAGES/bin:$RUBY_LOCAL:$PATH
+export NPM_PACKAGES="$HOME/.npm_packages"
+export PNPM_HOME="$HOME/.local/share/pnpm"
+
+export PATH=$HOME/bin:$HOME/.local/bin:/usr/local/bin:$NPM_PACKAGES/bin:$PNPM_HOME:$PATH
+
+# Scripts de desarrollo Pausa
+export PATH="$PATH:/$HOME/work/pausa/dev-utils/bin"
+# opencode
+export PATH="$HOME/.opencode/bin:$PATH"
 
 # Zsh config (replaces oh-my-zsh, see zsh/README.md)
 for f in completion directories history misc z per-directory-history; do
@@ -24,14 +31,11 @@ elif [ -s "$NVM_DIR/nvm.sh" ]; then
 fi
 
 # User configuration
-
 if [[ -n $SSH_CONNECTION ]]; then
   export EDITOR='vim'
 else
   export EDITOR='nvim'
 fi
-
-export DEFAULT_USER='albo'
 
 if [ "$TERM" = "linux" ]; then
 	printf %b '\e[40m' '\e[8]' # set default background to color 0 'dracula-bg'
@@ -70,47 +74,13 @@ function gd { git diff "$@" }
 function gp { git fetch --all && git pull --rebase "$@" }
 function c { git add . && git commit -m "${*}" }
 
-# Update everything in parallel, non-interactively, with clean grouped output per job.
+# Update everything in non-interactively
 function upd {
-  local is_mac=false
-  [[ "$(uname)" == "Darwin" ]] && is_mac=true
-
-  local tmpdir; tmpdir=$(mktemp -d)
-  local -a jobs=(nvim npm)
-  local -a pids=()
-
-  { nvim --headless +PlugUpdate +qall } &> "$tmpdir/nvim.log" &
-  pids+=($!)
-
-  { npm install npm@latest -g && npm update -g } &> "$tmpdir/npm.log" &
-  pids+=($!)
-
-  if $is_mac; then
-    jobs+=(brew)
-    { brew update && brew upgrade && brew autoremove && brew cleanup } &> "$tmpdir/brew.log" &
-    pids+=($!)
-  else
-    jobs+=(snap apt)
-    { sudo snap refresh } &> "$tmpdir/snap.log" &
-    pids+=($!)
-    # force-confdef/force-confold + noninteractive avoids the dpkg "keep or
-    # overwrite config file" prompt that -y alone does not suppress.
-    { sudo bash -c 'export DEBIAN_FRONTEND=noninteractive; apt update && apt dist-upgrade -y -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confold" && apt autoremove -y' } &> "$tmpdir/apt.log" &
-    pids+=($!)
-  fi
-
-  wait $pids
-
-  # Jobs write to their own log files, not the terminal, so printing the
-  # results here (after everything finished in parallel) never interleaves.
-  local job
-  for job in $jobs; do
-    print -P "%F{cyan}── $job ──%f"
-    cat "$tmpdir/$job.log"
-    echo
-  done
-
-  rm -rf "$tmpdir"
+  nvim --headless +PlugUpdate +qall
+  command -v npm && npm install npm@latest -g && npm update -g
+  command -v brew && brew update && brew upgrade -y && brew autoremove && brew cleanup
+  command -v snap && sudo snap refresh
+  command -v apt && sudo bash -c 'export DEBIAN_FRONTEND=noninteractive; apt update && apt dist-upgrade -y -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confold" && apt autoremove -y'
 }
 
 # Opens default editor with the files or with the changed git files if able.
@@ -134,12 +104,6 @@ function e {
   $EDITOR "$@"
 }
 
-# Auto-activate Python venv on .venv folder
-_venv_auto_activate() { [[ -f ".venv/bin/activate" && "$VIRTUAL_ENV" != "$PWD/.venv" ]] && source ".venv/bin/activate"; }
-autoload -Uz add-zsh-hook
-add-zsh-hook chpwd _venv_auto_activate
-_venv_auto_activate
-
 # Start the project
 function start() {
   if [[ -f "main.py" ]]; then
@@ -151,17 +115,12 @@ function start() {
   fi
 }
 
-SF_AC_ZSH_SETUP_PATH=/home/albo/.cache/sf/autocomplete/zsh_setup && test -f $SF_AC_ZSH_SETUP_PATH && source $SF_AC_ZSH_SETUP_PATH; # sf autocomplete setup
 
-# pnpm
-export PNPM_HOME="$HOME/.local/share/pnpm"
-export PATH="$PNPM_HOME:$PATH"
-
-# Scripts de desarrollo Pausa
-[ -d "/Users/albo/work/pausa/dev-utils/bin" ] && export PATH="$PATH:/Users/albo/work/pausa/dev-utils/bin"
-
-# opencode
-export PATH="/home/albo/.opencode/bin:$PATH"
+# Auto-activate Python venv on .venv folder
+_venv_auto_activate() { [[ -f ".venv/bin/activate" && "$VIRTUAL_ENV" != "$PWD/.venv" ]] && source ".venv/bin/activate"; }
+autoload -Uz add-zsh-hook
+add-zsh-hook chpwd _venv_auto_activate
+_venv_auto_activate
 
 # Powerlevel10k prompt (replaces oh-my-zsh's agnoster theme, no per-prompt git subprocess spam)
 source ~/.powerlevel10k/powerlevel10k.zsh-theme
