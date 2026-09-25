@@ -2,11 +2,9 @@ Replaces oh-my-zsh
 ==================
 
 These files replace oh-my-zsh's core (`compinit`, completion styling, history
-options, key bindings, directory aliases, terminal title) and its `z`
-plugin, sourced directly from `.zshrc` without the
-framework overhead around them. The `git` plugin was already replaced earlier
-by two functions (`gst`, `gd`) directly in `.zshrc`; the `fzf` plugin is now
-just `eval "$(fzf --zsh)"`, also in `.zshrc`.
+options, key bindings, directory aliases) and its `z` plugin, sourced directly
+from `.zshrc` without the framework overhead around them. The `git` plugin was
+already replaced earlier by two functions (`gst`, `gd`) directly in `.zshrc`.
 
 Files
 -----
@@ -19,15 +17,18 @@ Files
   oh-my-zsh used to set.
 * `misc.zsh` — a few cheap shell options, the `_='sudo '` alias, and `take()`
   (mkdir -p + cd).
-* `termsupport.zsh` — auto-updates the terminal tab/window title.
 * `z.zsh` — vendored from oh-my-zsh's `z` plugin (actually `agkozak/zsh-z`).
 
 Deliberately dropped
 ---------------------
 
-* OSC7 cwd sync (termsupport.zsh's `omz_termsupport_cwd`) — tmux's own
-  `-c "#{pane_current_path}"` bindings already open new panes in the right
-  directory, so this wasn't needed.
+* Terminal title and OSC7 cwd sync (oh-my-zsh's `lib/termsupport.zsh`) — tmux
+  sets the window title, and its own `-c "#{pane_current_path}"` bindings
+  already open new panes in the right directory.
+* Most of oh-my-zsh's `lib/key-bindings.zsh` — only emacs mode and Ctrl-R
+  history search are kept.
+* `fzf` plugin — Ctrl-R uses zsh's built-in incremental pattern search instead.
+* `per-directory-history` plugin — history is a single global `~/.zsh_history`.
 * `takeurl`/`takezip`/`takegit`, `omz_urlencode`/`omz_urldecode`,
   `open_command`, `omz_history -c` confirm-wrapper — rarely used utility
   functions from oh-my-zsh's `lib/functions.zsh`.
