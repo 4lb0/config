@@ -2,8 +2,8 @@ Replaces oh-my-zsh
 ==================
 
 These files replace oh-my-zsh's core (`compinit`, completion styling, history
-options, key bindings, directory aliases, terminal title) and its `z` /
-`per-directory-history` plugins, sourced directly from `.zshrc` without the
+options, key bindings, directory aliases, terminal title) and its `z`
+plugin, sourced directly from `.zshrc` without the
 framework overhead around them. The `git` plugin was already replaced earlier
 by two functions (`gst`, `gd`) directly in `.zshrc`; the `fzf` plugin is now
 just `eval "$(fzf --zsh)"`, also in `.zshrc`.
@@ -12,7 +12,7 @@ Files
 -----
 
 * `completion.zsh` — completion styling + cached `compinit`/`bashcompinit`.
-* `keybindings.zsh` — vendored verbatim from oh-my-zsh's `lib/key-bindings.zsh`.
+* `keybindings.zsh` — emacs mode and Ctrl-R history search.
 * `directories.zsh` — vendored verbatim from oh-my-zsh's `lib/directories.zsh`
   (`l`/`ll`/`la`, `..`/`...`, `md`/`rd`, `cd -N`, `auto_cd`).
 * `history.zsh` — bumps `HISTSIZE`/`SAVEHIST` and sets the history `setopt`s
@@ -21,8 +21,6 @@ Files
   (mkdir -p + cd).
 * `termsupport.zsh` — auto-updates the terminal tab/window title.
 * `z.zsh` — vendored from oh-my-zsh's `z` plugin (actually `agkozak/zsh-z`).
-* `per-directory-history.zsh` — vendored from oh-my-zsh's plugin of the same
-  name (Ctrl-G toggles per-directory vs. global history).
 
 Deliberately dropped
 ---------------------

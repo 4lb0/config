@@ -16,7 +16,7 @@ export PATH="$PATH:/$HOME/work/pausa/dev-utils/bin"
 export PATH="$HOME/.opencode/bin:$PATH"
 
 # Zsh config (replaces oh-my-zsh, see zsh/README.md)
-for f in completion directories history misc z per-directory-history; do
+for f in keybindings completion directories history misc z; do
   source "$HOME/.config/zsh/$f.zsh"
 done
 
