@@ -190,10 +190,10 @@ nnoremap <silent> <F3> :set paste!<cr>
 inoremap <silent> <F3> <esc>:set paste!<cr>i
 " Toggle relative numbers line
 nnoremap <silent> m :set relativenumber!<CR>
+nnoremap <silent> <leader>c :make<CR>
 " Git
 nnoremap gs :Git status<CR>
 nnoremap gb :Git blame<CR>
-nnoremap <silent> <leader>c :make<CR>
 
 function! s:GitSyncEvent(job_id, data, event)
   if a:event == 'stdout'
@@ -219,14 +219,10 @@ function! GitSync()
 endfunction
 
 nnoremap <leader>s :call GitSync()<CR>
-" Tests
-nnoremap <silent> <leader>t :TestSuite<CR>
 " Fzf
-nnoremap <silent> <leader>g :GFiles<CR>
 nnoremap <silent> <leader>f :Files<CR>
-nnoremap <silent> <leader>b :Buffers<CR>
 nnoremap <silent> <leader>l :Lines<CR>
-nnoremap <silent> <leader>S :Ag! <C-R><C-W><CR>
+nnoremap <silent> <leader>a :Ag! <C-R><C-W><CR>
 " Buffers
 nnoremap <silent> <leader>n :enew<CR>
 nnoremap <silent> <tab> :bnext<CR>
