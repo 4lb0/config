@@ -194,7 +194,31 @@ nnoremap <silent> m :set relativenumber!<CR>
 nnoremap gs :Git status<CR>
 nnoremap gb :Git blame<CR>
 nnoremap <silent> <leader>c :make<CR>
-nnoremap <leader>s :Git add . \| Git commit -m "wip" \| Git pull --rebase \| Git push<CR>
+
+function! s:GitSyncEvent(job_id, data, event)
+  if a:event == 'stdout'
+    echom '🔄 git sync'
+  elseif a:event == 'stderr'
+    echom '🚨 git sync error : ' . join(a:data)
+  elseif a:event == 'exit'
+    if a:data == 0
+      echom '✅ git sync ok'
+    else
+      echom '⚠️ git sync failed'
+    endif
+  endif
+endfunction
+
+function! GitSync()
+  let s:callbacks = {
+      \ 'on_stdout': function('s:GitSyncEvent'),
+      \ 'on_stderr': function('s:GitSyncEvent'),
+      \ 'on_exit': function('s:GitSyncEvent')
+      \ }
+  let s:my_job = jobstart(['sh', '-c', 'git add . && git commit -m "wip" && git pull --rebase && git push'], s:callbacks)
+endfunction
+
+nnoremap <leader>s :call GitSync()<CR>
 " Tests
 nnoremap <silent> <leader>t :TestSuite<CR>
 " Fzf
