@@ -11,7 +11,7 @@ ln -sf $CONFIG_PATH/ssh_config ~/.ssh/config
 ln -sf $CONFIG_PATH/.prettierrc ~/.prettierrc
 mkdir -p ~/.config/opencode
 ln -sf $CONFIG_PATH/opencode.json ~/.config/opencode/opencode.json
-ln -sf $CONFIG_PATH/opencode-tui.json ~/.config/opencode/tui.json
+ln -sf $CONFIG_PATH/opencode-tui.json ~/.config/opencode/cli.json
 [ -L ~/.config/zsh ] && rm ~/.config/zsh
 ln -sf $CONFIG_PATH/zsh ~/.config/zsh
 
