@@ -7,8 +7,9 @@ export DEFAULT_USER='albo'
 
 export NPM_PACKAGES="$HOME/.npm_packages"
 export PNPM_HOME="$HOME/.local/share/pnpm"
+export CARGO_BIN="$home/.cargo/bin"
 
-export PATH=$HOME/bin:$HOME/.local/bin:/usr/local/bin:$NPM_PACKAGES/bin:$PNPM_HOME:$PATH
+export PATH=$HOME/bin:$HOME/.local/bin:/usr/local/bin:$NPM_PACKAGES/bin:$PNPM_HOME:$CARGO_BIN:$PATH
 
 # Scripts de desarrollo Pausa
 export PATH="$PATH:/$HOME/work/pausa/dev-utils/bin"
