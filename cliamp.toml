@@ -1,0 +1,12 @@
+theme = "dracula"
+provider = "spotify"
+
+eq_preset = "Custom"
+eq = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+shuffle = true
+
+[spotify]
+client_id = "6829429965684f148627ad551133f952"
+
+[ytmusic]
+cookies_from = "firefox"

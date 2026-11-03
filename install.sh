@@ -12,6 +12,8 @@ ln -sf $CONFIG_PATH/.prettierrc ~/.prettierrc
 mkdir -p ~/.config/opencode
 ln -sf $CONFIG_PATH/opencode.json ~/.config/opencode/opencode.json
 ln -sf $CONFIG_PATH/opencode-tui.json ~/.config/opencode/cli.json
+mkdir -p ~/.config/cliamp
+ln -sf $CONFIG_PATH/cliamp.toml ~/.config/cliamp/config.toml
 [ -L ~/.config/zsh ] && rm ~/.config/zsh
 ln -sf $CONFIG_PATH/zsh ~/.config/zsh
 
