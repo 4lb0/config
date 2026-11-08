@@ -86,20 +86,33 @@ function upd {
 
 # Opens default editor with the files or with the changed git files if able.
 function e {
-  if [ $# -lt 1 ]; then
-    if test -d .git; then
-      if test -f .gitignore; then
-        git ls-files -zmo --exclude-from=.gitignore | tr '\0' '\n' > /tmp/e_git_files
-      else
-        git ls-files -zmo | tr '\0' '\n' > /tmp/e_git_files
+  if [ $# -lt 1 ] && git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
+    local -a editable
+    local entry f
+    local max=${E_MAX_FILES:-10}
+
+    # Changed + untracked files only: porcelain already respects .gitignore
+    # (including nested and global excludes). -z is safe for spaces/newlines.
+    while IFS= read -r -d '' entry; do
+      # Rename/copy entries are followed by the original path; skip it.
+      if [[ ${entry[1]} == [RC] ]]; then
+        IFS= read -r -d '' _
       fi
-      xargs file -i < /tmp/e_git_files | grep -v binary | awk -F ':' '{print $1}' > /tmp/e_files_to_edit
-      grep -vE '\.claude\.DS_Store'  /tmp/e_files_to_edit > /tmp/e_files_to_edit_filtered
-      if [ -s /tmp/e_files_to_edit_filtered ]; then
-        # Remove .claude files, cap at 10 to avoid opening too many buffers
-        head -n 10 /tmp/e_files_to_edit_filtered | xargs $EDITOR
-        return
-      fi
+      f=${entry[4,-1]}
+      [ -f "$f" ] || continue
+      case $f in
+        .DS_Store|*.DS_Store|.claude/*|*/.claude/*) continue ;;
+      esac
+      case $(file -b -i -- "$f") in
+        *binary*) continue ;;
+      esac
+      editable+=("$f")
+      (( ${#editable} >= max )) && break
+    done < <(git status --porcelain -z --untracked-files=all)
+
+    if (( ${#editable} > 0 )); then
+      $EDITOR "${editable[@]}"
+      return
     fi
   fi
   $EDITOR "$@"
