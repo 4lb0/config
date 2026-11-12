@@ -38,6 +38,8 @@ function! CocCurrentFunction()
   return get(b:, 'coc_current_function', '')
 endfunction
 
+let g:lightline#bufferline#unnamed = '[No Name]'
+
 let g:lightline = {
       \   'colorscheme': 'darcula',
       \   'active': {
@@ -153,6 +155,8 @@ set wildignore=*.o,*~,*.pyc,*cache/*,*log/*,.git/*,.svn/*,*/vendor/*,*/node_modu
 set nobackup
 set nowb
 set noswapfile
+set hidden " keep buffers loaded: use buffers as tabs, switch without saving first
+set confirm " ask instead of failing with E37/E89 on unsaved changes
 set wildmenu  " visual autocomplete for command menu
 
 autocmd BufNewFile,BufRead *.md set filetype=markdown
@@ -223,15 +227,26 @@ nnoremap <leader>s :call GitSync()<CR>
 nnoremap <silent> <leader>f :Files<CR>
 nnoremap <silent> <leader>l :Lines<CR>
 nnoremap <silent> <leader>a :Ag! <C-R><C-W><CR>
-" Buffers
+" Buffers (used as tabs)
+" <leader>n = new empty "tab" in the current window (no split)
 nnoremap <silent> <leader>n :enew<CR>
 nnoremap <silent> <tab> :bnext<CR>
 nnoremap <silent> <s-tab> :bprevious<CR>
-" close buffer and go to previous one if exists
-nnoremap <silent> q :
-      \ if len(getbufinfo({'buflisted':1})) > 1  <BAR>
-      \   bprevious <BAR>
-      \   bdelete # <BAR>
-      \ else <BAR>
-      \   bdelete <BAR>
-      \ endif <CR>
+" q = close buffer (asks to discard unsaved changes), <leader>q = close without asking
+nnoremap <silent> q :call <SID>CloseBuffer(0)<CR>
+nnoremap <silent> <leader>q :call <SID>CloseBuffer(1)<CR>
+
+function! s:CloseBuffer(force) abort
+  let l:buf = bufnr('%')
+  if getbufinfo(l:buf)[0].changed && !a:force
+    let l:name = empty(bufname(l:buf)) ? '[No Name]' : bufname(l:buf)
+    if confirm('Discard changes in ' . l:name . '?', "&Discard\n&Cancel", 2) != 1
+      return
+    endif
+  endif
+  if len(getbufinfo({'buflisted': 1})) > 1
+    bprevious
+  endif
+  " bang: changes were already confirmed discarded (or -force), don't ask again
+  execute 'bdelete!' l:buf
+endfunction
