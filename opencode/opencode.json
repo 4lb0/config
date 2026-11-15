@@ -1,8 +1,24 @@
 {
   "$schema": "https://opencode.ai/config.json",
   "lsp": {},
+  "permissions": [
+    { "action": "skill", "resource": "pausa-*", "effect": "deny" },
+    { "action": "skill", "resource": "*-pausa", "effect": "deny" },
+    { "action": "skill", "resource": "ticket-pausa", "effect": "allow" }
+  ],
   "permission": {
     "*": "allow",
+    "skill": {
+      "docs": "deny",
+      "computer-use": "deny",
+      "chrome-browser": "deny",
+      "artifact-emulator": "deny",
+      "deep-research": "deny",
+      "security-audit": "deny",
+      "c-review": "deny",
+      "canvas-design": "deny",
+      "find-skills": "deny"
+    },
     "bash": {
       "*": "allow",
       "rm /tmp*": "allow",
@@ -42,5 +58,8 @@
       "/tmp": "allow",
       "/tmp/*": "allow"
     }
-  }
+  },
+  "plugins": [
+    "@slkiser/opencode-quota"
+  ]
 }
