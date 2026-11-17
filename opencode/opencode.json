@@ -1,5 +1,25 @@
 {
   "$schema": "https://opencode.ai/config.json",
+  "model": "opencode-go/deepseek-v4.1-flash",
+  "agents": {
+    "build": {
+      "model": "opencode-go/qwen4-max"
+    },
+    "operative-runner": {
+      "description": "Executes operational and mechanical tasks: file edits, refactors, scripts, bulk changes. Use it for well-specified work that does not need deep analysis.",
+      "mode": "subagent",
+      "model": "opencode-go/deepseek-v4.1-flash"
+    },
+    "general": {
+      "model": "opencode-go/deepseek-v4.1-flash"
+    },
+    "explore": {
+      "model": "opencode-go/deepseek-v4.1-flash"
+    },
+    "plan": {
+      "model": "opencode-go/qwen4-max"
+    }
+  },
   "lsp": {},
   "permissions": [
     { "action": "skill", "resource": "pausa-*", "effect": "deny" },
@@ -14,7 +34,6 @@
       "chrome-browser": "deny",
       "artifact-emulator": "deny",
       "deep-research": "deny",
-      "security-audit": "deny",
       "c-review": "deny",
       "canvas-design": "deny",
       "find-skills": "deny"
@@ -61,5 +80,11 @@
   },
   "plugins": [
     "@slkiser/opencode-quota"
-  ]
+  ],
+  "provider": {
+    "anthropic": {},
+    "deepseek": {},
+    "opencode-go": {},
+    "opencode": {}
+  }
 }
