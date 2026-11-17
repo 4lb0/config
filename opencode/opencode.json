@@ -3,7 +3,7 @@
   "model": "opencode-go/deepseek-v4.1-flash",
   "agents": {
     "build": {
-      "model": "opencode-go/qwen4-max"
+      "model": "opencode-go/glm-5.3"
     },
     "operative-runner": {
       "description": "Executes operational and mechanical tasks: file edits, refactors, scripts, bulk changes. Use it for well-specified work that does not need deep analysis.",
@@ -17,7 +17,7 @@
       "model": "opencode-go/deepseek-v4.1-flash"
     },
     "plan": {
-      "model": "opencode-go/qwen4-max"
+      "model": "opencode-go/glm-5.3"
     }
   },
   "lsp": {},
