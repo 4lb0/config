@@ -1,0 +1,1018 @@
+#!/usr/bin/env python3
+"""sessions-ls — list terminal coding agents running in tmux panes.
+
+Shows every opencode / claude process that owns a tmux pane, with its session
+name, its status (working / awaiting / approval) and where it lives.
+
+Interactive picker (when stdout and stdin are a TTY): arrows/jk to move,
+Enter to jump to that pane, q to quit. The list refreshes itself every second.
+
+In a pipeline (or with --plain) it prints an ``ls -lht``-ish listing sorted by
+most recently active, one row per agent, and exits.
+
+Only the Python standard library is used.
+"""
+
+from __future__ import annotations
+
+import argparse
+import json
+import os
+import re
+import select
+import shutil
+import sqlite3
+import subprocess
+import sys
+import termios
+import time
+import tty
+from datetime import datetime, timezone
+from dataclasses import dataclass
+
+VERSION = "0.2.1"
+
+HOME = os.path.expanduser("~")
+OPENCODE_DB = os.environ.get(
+    "SESSION_LS_OPENCODE_DB", os.path.join(HOME, ".local/share/opencode/opencode.db")
+)
+CLAUDE_PROJECTS = os.environ.get(
+    "SESSION_LS_CLAUDE_DIR", os.path.join(HOME, ".claude/projects")
+)
+
+SEP = "\x1f"
+SPINNER = "⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏"
+
+# Subcommands / flags that mean "not an interactive TUI".
+OPENCODE_NON_TUI = {
+    "acp", "api", "auth", "debug", "mcp", "models", "plugin", "pair", "reload",
+    "run", "serve", "service", "session", "stats", "uninstall", "update", "upgrade",
+}
+CLAUDE_NON_TUI = {
+    "-p", "--print", "--version", "-v", "mcp", "doctor", "update", "install",
+    "config", "setup-token",
+}
+
+SKIP_TYPES = {
+    "mode", "permission-mode", "session-owner", "file-history-snapshot", "summary",
+    "queue-operation", "atis-latch", "attachment", "api-request", "last-prompt",
+}
+
+APPROVAL_RE = re.compile(
+    r"(Do you want to (?:proceed|allow|run|make|execute)"
+    r"|Permission required"
+    r"|Allow (?:once|always|this)"
+    r"|❯\s*1[.)]\s*Yes"
+    r"|\(y/n\)|\[y/N\])",
+    re.IGNORECASE,
+)
+
+STATUS_COLORS = {
+    "working": "\x1b[32m",
+    "awaiting": "\x1b[33m",
+    "approval": "\x1b[1;31m",
+    "unknown": "\x1b[2m",
+}
+RESET = "\x1b[0m"
+DIM = "\x1b[2m"
+BOLD = "\x1b[1m"
+
+
+# --------------------------------------------------------------------------
+# shell helpers
+# --------------------------------------------------------------------------
+
+def run(cmd: list[str]) -> str:
+    try:
+        out = subprocess.run(cmd, capture_output=True, text=True, timeout=5)
+        return out.stdout if out.returncode == 0 else ""
+    except (OSError, subprocess.SubprocessError):
+        return ""
+
+
+def tmux(*args: str) -> str:
+    return run(["tmux", *args])
+
+
+# --------------------------------------------------------------------------
+# data model
+# --------------------------------------------------------------------------
+
+@dataclass
+class Pane:
+    pane_id: str
+    session: str
+    window: int
+    index: int
+    pid: int
+    command: str
+    title: str
+    path: str
+    active: bool
+
+    @property
+    def target(self) -> str:
+        return f"{self.session}:{self.window}.{self.index}"
+
+
+@dataclass
+class Agent:
+    pane: Pane
+    kind: str
+    name: str
+    status: str
+    activity: float          # epoch seconds of last observed activity
+    session_id: str = ""
+    confirmed: bool = True   # False when the session was guessed
+
+
+@dataclass
+class Proc:
+    pid: int
+    ppid: int
+    argv: list[str]
+
+
+# --------------------------------------------------------------------------
+# tmux
+# --------------------------------------------------------------------------
+
+def list_panes() -> list[Pane]:
+    fmt = SEP.join([
+        "#{pane_id}", "#{session_name}", "#{window_index}", "#{pane_index}",
+        "#{pane_pid}", "#{pane_current_command}", "#{pane_title}",
+        "#{pane_current_path}", "#{pane_active}",
+    ])
+    panes = []
+    for line in tmux("list-panes", "-a", "-F", fmt).splitlines():
+        parts = line.split(SEP)
+        if len(parts) < 9:
+            continue
+        pane_id, sess, win, idx, pid, cmd, title, path, active = parts[:9]
+        try:
+            panes.append(Pane(
+                pane_id=pane_id, session=sess, window=int(win), index=int(idx),
+                pid=int(pid), command=cmd, title=title, path=path,
+                active=active == "1",
+            ))
+        except ValueError:
+            continue
+    return panes
+
+
+def pane_prompt(pane_id: str) -> str:
+    """Last lines of a pane, used to spot an approval prompt."""
+    out = tmux("capture-pane", "-p", "-t", pane_id, "-S", "-12")
+    lines = [ln for ln in out.splitlines() if ln.strip()]
+    return "\n".join(lines[-10:])
+
+
+# --------------------------------------------------------------------------
+# processes
+# --------------------------------------------------------------------------
+
+def list_processes() -> dict[int, Proc]:
+    procs: dict[int, Proc] = {}
+    for line in run(["ps", "-eo", "pid=,ppid=,command="]).splitlines():
+        parts = line.strip().split(None, 2)
+        if len(parts) < 3:
+            continue
+        try:
+            pid, ppid = int(parts[0]), int(parts[1])
+        except ValueError:
+            continue
+        procs[pid] = Proc(pid=pid, ppid=ppid, argv=parts[2].split())
+    return procs
+
+
+def looks_like_tui(proc: Proc) -> bool:
+    argv = proc.argv
+    base = os.path.basename(argv[0])
+    args = argv[1:]
+    # Never match the helper daemons / non interactive invocations.
+    if "serve" in args or "daemon" in args or "pty" in " ".join(args):
+        return False
+    if base == "opencode":
+        return not any(a in OPENCODE_NON_TUI for a in args if not a.startswith("-"))
+    if base == "claude":
+        return not any(a in CLAUDE_NON_TUI for a in args)
+    return False
+
+
+def pane_env_map(pids: list[int]) -> dict[int, str]:
+    """pid -> TMUX_PANE via the process environment."""
+    if not pids:
+        return {}
+    out = run(["ps", "eww", "-o", "pid=,command=", "-p", ",".join(map(str, pids))])
+    found: dict[int, str] = {}
+    for line in out.splitlines():
+        m = re.match(r"\s*(\d+)\s", line)
+        if not m:
+            continue
+        pid = int(m.group(1))
+        hit = re.search(r"TMUX_PANE=(%\d+)", line)
+        if hit:
+            found[pid] = hit.group(1)
+    return found
+
+
+def ancestor_pane(proc: Proc, procs: dict[int, Proc], pane_of_pid: dict[int, Pane]) -> Pane | None:
+    pid, seen = proc.pid, 0
+    while pid in procs and seen < 20:
+        if pid in pane_of_pid:
+            return pane_of_pid[pid]
+        pid = procs[pid].ppid
+        seen += 1
+    return None
+
+
+def agents_in_panes(panes: list[Pane]) -> list[tuple[Pane, str, Proc]]:
+    procs = list_processes()
+    pane_of_pid = {p.pid: p for p in panes}
+    pane_of_id = {p.pane_id: p for p in panes}
+    candidates = [p for p in procs.values() if looks_like_tui(p)]
+
+    matched: dict[str, tuple[int, int, Proc]] = {}
+    orphan: list[Proc] = []
+    for proc in candidates:
+        pane = ancestor_pane(proc, procs, pane_of_pid)
+        if pane is None:
+            orphan.append(proc)
+            continue
+        score = (0, 0 if len(proc.argv) == 1 else 1)
+        prev = matched.get(pane.pane_id)
+        if prev is None or score < prev[:2]:
+            matched[pane.pane_id] = (*score, proc)
+
+    # Fall back to TMUX_PANE for agents whose ancestry was detached.
+    env = pane_env_map([p.pid for p in orphan])
+    for proc in orphan:
+        pane = pane_of_id.get(env.get(proc.pid, ""))
+        if pane is None:
+            continue
+        score = (1, 0 if len(proc.argv) == 1 else 1)
+        prev = matched.get(pane.pane_id)
+        if prev is None or score < prev[:2]:
+            matched[pane.pane_id] = (*score, proc)
+
+    return [(pane_of_id[pane_id], os.path.basename(entry[2].argv[0]), entry[2])
+            for pane_id, entry in matched.items()]
+
+
+# --------------------------------------------------------------------------
+# opencode sessions
+# --------------------------------------------------------------------------
+
+def norm(s: str) -> str:
+    return re.sub(r"\s+", " ", s or "").strip().casefold()
+
+
+class OpenCodeIndex:
+    def __init__(self, db_path: str = OPENCODE_DB):
+        self.db_path = db_path
+        self.conn: sqlite3.Connection | None = None
+        self.sessions: list[dict] = []
+        self.loaded_at = 0.0
+
+    def _connect(self) -> sqlite3.Connection | None:
+        if self.conn is not None:
+            return self.conn
+        if not os.path.exists(self.db_path):
+            return None
+        try:
+            conn = sqlite3.connect(
+                f"file:{self.db_path}?mode=ro", uri=True, timeout=2.0
+            )
+            conn.row_factory = sqlite3.Row
+            conn.execute("PRAGMA query_only=1")
+            self.conn = conn
+        except sqlite3.Error:
+            return None
+        return self.conn
+
+    def refresh(self, max_age: float = 1.0) -> None:
+        if time.time() - self.loaded_at < max_age and self.sessions:
+            return
+        conn = self._connect()
+        if conn is None:
+            return
+        try:
+            rows = conn.execute(
+                """
+                SELECT id, title, directory, time_updated, time_busy, time_idle,
+                       idle_outcome, time_viewed, parent_id
+                FROM session_v2
+                WHERE parent_id IS NULL
+                  AND time_archived IS NULL
+                ORDER BY time_updated DESC
+                LIMIT 500
+                """
+            ).fetchall()
+        except sqlite3.Error:
+            # Schema may differ; fall back to the legacy table.
+            try:
+                rows = conn.execute(
+                    """
+                    SELECT id, title, directory, time_updated, NULL AS time_busy,
+                           NULL AS time_idle, NULL AS idle_outcome,
+                           NULL AS time_viewed, parent_id
+                    FROM session
+                    WHERE parent_id IS NULL AND time_archived IS NULL
+                    ORDER BY time_updated DESC LIMIT 500
+                    """
+                ).fetchall()
+            except sqlite3.Error:
+                return
+        self.sessions = [dict(r) for r in rows]
+        self.loaded_at = time.time()
+
+    def find(self, directory: str, title_hint: str) -> tuple[dict | None, bool]:
+        """Return (session, confirmed)."""
+        if not self.sessions:
+            return None, False
+        directory = os.path.normpath(directory)
+        local = [s for s in self.sessions
+                 if os.path.normpath(s.get("directory") or "") == directory]
+
+        if title_hint:
+            hint = norm(title_hint)
+            truncated = title_hint.rstrip().endswith(("…", "..."))
+            if truncated:
+                hint = norm(title_hint.rstrip().rstrip(".…"))
+
+            def matches(s: dict) -> bool:
+                t = norm(s.get("title") or "")
+                if not t:
+                    return False
+                return t.startswith(hint) if truncated else t == hint
+
+            for pool in (local, self.sessions):
+                hits = [s for s in pool if matches(s)]
+                if hits:
+                    hits.sort(key=lambda s: (s.get("time_viewed") or 0,
+                                             s.get("time_updated") or 0),
+                              reverse=True)
+                    return hits[0], True
+
+        if local:
+            local.sort(key=lambda s: (s.get("time_viewed") or 0,
+                                      s.get("time_updated") or 0), reverse=True)
+            return local[0], False
+        return None, False
+
+
+def opencode_status(s: dict, now: float) -> str:
+    busy = s.get("time_busy") or 0
+    idle = s.get("time_idle") or 0
+    if busy and busy > idle:
+        # Guard against a stale "busy" flag left by a crash.
+        last = max(busy, s.get("time_updated") or 0) / 1000.0
+        return "working" if now - last < 2 * 3600 else "awaiting"
+    return "awaiting"
+
+
+def opencode_activity(s: dict) -> float:
+    for key in ("time_updated", "time_busy", "time_idle", "time_created"):
+        v = s.get(key)
+        if v:
+            return v / 1000.0
+    return 0.0
+
+
+# --------------------------------------------------------------------------
+# claude sessions
+# --------------------------------------------------------------------------
+
+def claude_project_dir(path: str) -> str | None:
+    def munge(p: str) -> str:
+        return re.sub(r"[^A-Za-z0-9_]", "-", p)
+
+    p = os.path.normpath(path)
+    while True:
+        cand = os.path.join(CLAUDE_PROJECTS, munge(p))
+        if os.path.isdir(cand):
+            return cand
+        if p == "/" or not p:
+            return None
+        p = os.path.dirname(p)
+
+
+class ClaudeIndex:
+    """Reads the tail of recent transcripts and derives title + status."""
+
+    MAX_BYTES = 256 * 1024
+
+    def __init__(self):
+        self.cache: dict[str, tuple[tuple, dict]] = {}
+
+    def _tail(self, path: str) -> list[str]:
+        try:
+            size = os.path.getsize(path)
+            with open(path, "rb") as fh:
+                if size > self.MAX_BYTES:
+                    fh.seek(size - self.MAX_BYTES)
+                    chunk = fh.read()
+                    lines = chunk.decode("utf-8", "replace").splitlines()[1:]
+                else:
+                    lines = fh.read().decode("utf-8", "replace").splitlines()
+            return lines
+        except OSError:
+            return []
+
+    def info(self, path: str) -> dict:
+        try:
+            st = os.stat(path)
+        except OSError:
+            return {}
+        key = (st.st_mtime_ns, st.st_size)
+        cached = self.cache.get(path)
+        if cached is not None and cached[0] == key:
+            return cached[1]
+
+        title = ""
+        status = ""
+        activity = st.st_mtime
+        last_ts = 0.0
+        for line in reversed(self._tail(path)):
+            try:
+                entry = json.loads(line)
+            except json.JSONDecodeError:
+                continue
+            if not isinstance(entry, dict):
+                continue
+            etype = entry.get("type")
+            if last_ts == 0.0 and entry.get("timestamp"):
+                last_ts = parse_iso(entry["timestamp"])
+                activity = last_ts or activity
+            if not title and etype == "ai-title":
+                title = entry.get("aiTitle") or ""
+                continue
+            if etype in SKIP_TYPES:
+                continue
+            if etype == "assistant":
+                stop = (entry.get("message") or {}).get("stop_reason")
+                status = "working" if stop in (None, "tool_use") else "awaiting"
+                break
+            if etype == "user":
+                status = "working"
+                break
+            if etype == "system":
+                sub = entry.get("subtype")
+                status = "working" if sub in ("compact_boundary",) else "awaiting"
+                break
+            if etype in ("progress", "tool_result", "tool_use"):
+                status = "working"
+                break
+            # Anything else (plugin bookkeeping, ledger entries…) is ignored.
+            continue
+
+        if not status:
+            status = "working" if time.time() - st.st_mtime < 90 else "awaiting"
+
+        data = {
+            "title": title,
+            "status": status,
+            "activity": activity,
+            "mtime": st.st_mtime,
+            "size": st.st_size,
+            "id": os.path.basename(path).removesuffix(".jsonl"),
+        }
+        self.cache[path] = (key, data)
+        return data
+
+    def recent(self, project_dir: str, limit: int = 12) -> list[tuple[str, dict]]:
+        try:
+            names = [n for n in os.listdir(project_dir) if n.endswith(".jsonl")]
+        except OSError:
+            return []
+        paths = [os.path.join(project_dir, n) for n in names]
+        paths.sort(key=lambda p: stat_mtime(p), reverse=True)
+        out = []
+        for p in paths[:limit]:
+            info = self.info(p)
+            if info:
+                out.append((p, info))
+        return out
+
+    def find(self, directory: str, title_hint: str) -> tuple[dict | None, bool]:
+        project = claude_project_dir(directory)
+        if not project:
+            return None, False
+        entries = self.recent(project)
+        if not entries:
+            return None, False
+
+        if title_hint:
+            hint = norm(title_hint)
+            truncated = title_hint.rstrip().endswith(("…", "..."))
+            if truncated:
+                hint = norm(title_hint.rstrip().rstrip(".…"))
+            for path, info in entries:
+                t = norm(info["title"])
+                if not t:
+                    continue
+                if (t.startswith(hint) if truncated else t == hint):
+                    return info, True
+
+        path, info = entries[0]
+        return info, False
+
+
+def stat_mtime(path: str) -> float:
+    try:
+        return os.path.getmtime(path)
+    except OSError:
+        return 0.0
+
+
+def parse_iso(ts: str) -> float:
+    try:
+        dt = datetime.strptime(ts[:19], "%Y-%m-%dT%H:%M:%S")
+    except (ValueError, TypeError):
+        return 0.0
+    return dt.replace(tzinfo=timezone.utc).timestamp()
+
+
+# --------------------------------------------------------------------------
+# collection
+# --------------------------------------------------------------------------
+
+def collect(opencode: OpenCodeIndex, claude: ClaudeIndex) -> list[Agent]:
+    opencode.refresh()
+    agents: list[Agent] = []
+
+    for pane, kind, _proc in agents_in_panes(list_panes()):
+        title = pane.title or ""
+        pdir = pane.path or os.getcwd()
+        hint = ""
+
+        if kind == "opencode":
+            if title.startswith("OC | "):
+                hint = title[len("OC | "):]
+            elif title.startswith("OC |"):
+                hint = title[len("OC |"):].lstrip()
+            session, confirmed = opencode.find(pdir, hint)
+            if session:
+                name = session.get("title") or hint or os.path.basename(pdir)
+                status = opencode_status(session, time.time())
+                activity = opencode_activity(session)
+                sid = session.get("id") or ""
+            else:
+                name = hint or os.path.basename(pdir)
+                status = "unknown"
+                activity = stat_mtime(pdir)
+                sid = ""
+        else:  # claude
+            hint = re.sub(r"^[^\w]+", "", title).strip()
+            info, confirmed = claude.find(pdir, hint)
+            if info:
+                name = info.get("title") or hint or os.path.basename(pdir)
+                status = info.get("status", "awaiting")
+                activity = info.get("activity") or stat_mtime(pdir)
+                sid = info.get("id", "")
+            else:
+                name = hint or os.path.basename(pdir)
+                status = "unknown"
+                activity = stat_mtime(pdir)
+                sid = ""
+
+        agents.append(Agent(
+            pane=pane, kind=kind, name=name or os.path.basename(pdir),
+            status=status, activity=activity, session_id=sid,
+            confirmed=confirmed,
+        ))
+
+    # Approval detection: a visible prompt outranks "working"/"unknown".
+    # Only busy panes are checked (an approval prompt means a job is waiting).
+    for agent in agents:
+        if agent.status in ("working", "unknown"):
+            prompt = pane_prompt(agent.pane.pane_id)
+            if prompt and APPROVAL_RE.search(prompt):
+                agent.status = "approval"
+
+    agents.sort(key=lambda a: (a.activity or 0), reverse=True)
+    return agents
+
+
+# --------------------------------------------------------------------------
+# formatting
+# --------------------------------------------------------------------------
+
+def human_age(ts: float, now: float | None = None) -> str:
+    if not ts:
+        return "?"
+    now = now or time.time()
+    delta = max(0.0, now - ts)
+    if delta < 10:
+        return "now"
+    if delta < 60:
+        return f"{int(delta)}s"
+    if delta < 3600:
+        return f"{int(delta / 60)}m"
+    if delta < 86400:
+        return f"{int(delta / 3600)}h"
+    return f"{int(delta / 86400)}d"
+
+
+def short_path(path: str) -> str:
+    if path == HOME:
+        return "~"
+    if path.startswith(HOME + "/"):
+        return "~" + path[len(HOME):]
+    return path
+
+
+def truncate(text: str, width: int) -> str:
+    if width <= 0:
+        return ""
+    if len(text) <= width:
+        return text
+    if width == 1:
+        return "…"
+    return text[: width - 1] + "…"
+
+
+def plain(agents: list[Agent], header: bool = False, color: bool | None = None) -> str:
+    if not agents:
+        return ""
+    if color is None:
+        color = sys.stdout.isatty() and os.environ.get("NO_COLOR") is None
+    now = time.time()
+    rows = [
+        [a.status, a.kind, a.pane.target, human_age(a.activity, now), a.name,
+         short_path(a.pane.path)]
+        for a in agents
+    ]
+    labels = ["STATUS", "AGENT", "TMUX", "ACTIVE", "NAME", "PATH"]
+    all_rows = ([labels] if header else []) + rows
+    widths = [max(len(r[i]) for r in all_rows) for i in range(4)]
+    lines = []
+    if header:
+        lines.append(
+            labels[0].ljust(widths[0] + 1) + labels[1].ljust(widths[1] + 1)
+            + labels[2].ljust(widths[2] + 1) + labels[3].ljust(widths[3])
+            + "  " + labels[4]
+        )
+    for r in rows:
+        status = r[0].ljust(widths[0] + 1)
+        if color:
+            status = STATUS_COLORS.get(r[0], "") + status + RESET
+        line = (
+            status + r[1].ljust(widths[1] + 1)
+            + r[2].ljust(widths[2] + 1) + r[3].ljust(widths[3]) + "  " + r[4]
+        )
+        if r[5]:
+            path = DIM + r[5] + RESET if color else r[5]
+            line += "  " + path
+        lines.append(line.rstrip())
+    return "\n".join(lines)
+
+
+def as_json(agents: list[Agent]) -> str:
+    return json.dumps([
+        {
+            "kind": a.kind,
+            "status": a.status,
+            "name": a.name,
+            "path": a.pane.path,
+            "tmux": {
+                "pane": a.pane.pane_id,
+                "session": a.pane.session,
+                "window": a.pane.window,
+                "index": a.pane.index,
+                "target": a.pane.target,
+                "active": a.pane.active,
+            },
+            "session_id": a.session_id,
+            "active_seconds": int(max(0, time.time() - a.activity)) if a.activity else None,
+            "confirmed": a.confirmed,
+        }
+        for a in agents
+    ], indent=2, ensure_ascii=False)
+
+
+# --------------------------------------------------------------------------
+# interactive picker
+# --------------------------------------------------------------------------
+
+class Picker:
+    def __init__(self, opencode: OpenCodeIndex, claude: ClaudeIndex, interval: float = 1.0):
+        self.opencode = opencode
+        self.claude = claude
+        self.interval = interval
+        self.agents: list[Agent] = []
+        self.cursor = 0
+        self.selected_pane = ""
+        self.color = sys.stdout.isatty() and os.environ.get("NO_COLOR") is None
+        self.frame = 0
+
+    # -- terminal ------------------------------------------------------
+    def enter(self) -> None:
+        self.fd = sys.stdin.fileno()
+        self.saved = termios.tcgetattr(self.fd)
+        self.raw = True
+        tty.setraw(self.fd)
+        sys.stdout.write("\x1b[?1049h\x1b[?25l\x1b[?7l\x1b[2J")
+        sys.stdout.flush()
+
+    def leave(self) -> None:
+        if not getattr(self, "raw", False):
+            return
+        self.raw = False
+        sys.stdout.write("\x1b[?7h\x1b[?25h\x1b[?1049l")
+        sys.stdout.flush()
+        try:
+            termios.tcsetattr(self.fd, termios.TCSADRAIN, self.saved)
+        except termios.error:
+            pass
+
+    # -- data ----------------------------------------------------------
+    def refresh(self) -> None:
+        self.agents = collect(self.opencode, self.claude)
+        if self.selected_pane:
+            for i, a in enumerate(self.agents):
+                if a.pane.pane_id == self.selected_pane:
+                    self.cursor = i
+                    break
+            else:
+                self.cursor = min(self.cursor, max(0, len(self.agents) - 1))
+        self.cursor = max(0, min(self.cursor, len(self.agents) - 1))
+        if self.agents:
+            self.selected_pane = self.agents[self.cursor].pane.pane_id
+
+    # -- drawing -------------------------------------------------------
+    def paint(self, text: str, code: str) -> str:
+        return f"{code}{text}{RESET}" if self.color else text
+
+    def draw(self) -> None:
+        width, height = shutil.get_terminal_size((100, 30))
+        # Never write in the last column: a full-width line makes the
+        # terminal wrap and the whole frame slides down.
+        if width < 50:
+            self.color = False
+        budget = max(20, width - 1)
+        now = time.time()
+        working = sum(1 for a in self.agents if a.status == "working")
+        waiting = sum(1 for a in self.agents if a.status == "awaiting")
+        approval = sum(1 for a in self.agents if a.status == "approval")
+
+        title = "sessions-ls"
+        header = self.paint(title, BOLD) if self.color else title
+        summary = f"{len(self.agents)} agents"
+        plain_bits, color_bits = [], []
+        for count, label in ((working, "working"), (waiting, "awaiting"),
+                             (approval, "approval")):
+            if count:
+                plain_bits.append(f"{count} {label}")
+                color_bits.append(self.paint(f"{count} {label}",
+                                             STATUS_COLORS[label]))
+        clock = f"updated {time.strftime('%H:%M:%S')}"
+        if plain_bits:
+            full_plain = f"{summary}  ·  " + "  ·  ".join(plain_bits)
+            if len(f"  {title}   {full_plain}") + len(clock) + 2 <= budget:
+                summary = f"{summary}  ·  " + "  ·  ".join(color_bits)
+                summary_plain = full_plain
+            else:
+                summary_plain = summary
+        else:
+            summary_plain = summary
+
+        left_visible = f"  {title}   {summary_plain}"
+        if len(left_visible) + len(clock) + 2 > budget:
+            lines = [truncate(left_visible, budget)]
+        else:
+            pad = max(1, budget - len(left_visible) - len(clock) - 1)
+            lines = [f"  {header}   {summary}" + " " * pad
+                     + self.paint(clock, DIM)]
+        rule = self.paint("─" * budget, DIM)
+        lines.append(rule)
+
+        # Fixed columns take 41 cells (32 without the agent name, 28 without
+        # the age either); give the session name a readable cap and let the
+        # path use whatever is left.
+        if budget >= 64:
+            base, show_kind, show_age = 41, True, True
+        elif budget >= 48:
+            base, show_kind, show_age = 32, False, True
+        else:
+            base, show_kind, show_age = 28, False, False
+        name_w = max(6, min(44, budget - base - 12))
+        visible = max(1, height - 5)
+        if len(self.agents) > visible:
+            start = max(0, min(self.cursor - visible // 2,
+                               len(self.agents) - visible))
+            window = self.agents[start:start + visible]
+        else:
+            start, window = 0, self.agents
+
+        for i, a in enumerate(window):
+            idx = start + i
+            selected = idx == self.cursor
+            mark = "❯" if selected else " "
+            if a.status == "working":
+                glyph = SPINNER[self.frame % len(SPINNER)]
+            elif a.status == "approval":
+                glyph = "!"
+            elif a.status == "awaiting":
+                glyph = "○"
+            else:
+                glyph = "?"
+
+            status = a.status.ljust(8)
+            if self.color:
+                status = STATUS_COLORS.get(a.status, "") + status + RESET
+            kind = a.kind.ljust(8)
+            age = human_age(a.activity, now).rjust(4)
+            target = truncate(a.pane.target, 12).ljust(12)
+            name = truncate(a.name, name_w).ljust(name_w)
+            path = short_path(a.pane.path)
+
+            line = f" {mark} {glyph} {status}"
+            if show_kind:
+                line += f" {kind}"
+            if show_age:
+                line += f" {age}"
+            line += f"  {target} {name}"
+            room = budget - len(re.sub(r"\x1b\[[0-9;]*m", "", line)) - 2
+            if room > 10:
+                line += "  " + self.paint(truncate(path, room), DIM)
+            if selected:
+                if self.color:
+                    plain_line = re.sub(r"\x1b\[[0-9;]*m", "", line)
+                    line = "\x1b[7m" + plain_line.ljust(budget) + RESET
+            else:
+                line = line.rstrip()
+            lines.append(line)
+
+        if not self.agents:
+            lines.append("  no running opencode/claude panes found")
+
+        target = self.agents[self.cursor].pane.target if self.agents else ""
+        hint = f"  ↑↓/jk move   ⏎ jump{f' to {target}' if target else ''}   " \
+               "g/G top/bottom   r resort   q quit"
+        if len(hint) > budget:
+            hint = "  ↑↓/jk move   ⏎ jump   g/G   r resort   q quit"
+        lines.append(rule)
+        lines.append(hint[:budget])
+
+        if not self.color:
+            lines = [line[:budget] for line in lines]
+        sys.stdout.write("\x1b[H" + "\r\n".join(lines) + "\x1b[J")
+        sys.stdout.flush()
+        self.frame += 1
+
+    # -- keys ----------------------------------------------------------
+    def read_keys(self, timeout: float) -> list[str]:
+        r, _, _ = select.select([self.fd], [], [], timeout)
+        if not r:
+            return []
+        data = os.read(self.fd, 64).decode("utf-8", "replace")
+        if data == "\x1b":
+            # A lone ESC may be the start of a split escape sequence.
+            r, _, _ = select.select([self.fd], [], [], 0.02)
+            if r:
+                data += os.read(self.fd, 64).decode("utf-8", "replace")
+        keys: list[str] = []
+        i = 0
+        while i < len(data):
+            ch = data[i]
+            if ch == "\x1b":
+                rest = data[i + 1:]
+                for seq, key in (("[A", "up"), ("[B", "down"), ("OA", "up"),
+                                 ("OB", "down"), ("[H", "home"), ("[F", "end")):
+                    if rest.startswith(seq):
+                        keys.append(key)
+                        i += 1 + len(seq)
+                        break
+                else:
+                    keys.append("esc")
+                    i += 1
+                continue
+            if ch in "\r\n":
+                keys.append("enter")
+            elif ch == "\x03":
+                keys.append("quit")
+            else:
+                keys.append(ch)
+            i += 1
+        return keys
+
+    def jump(self, agent: Agent) -> None:
+        pane = agent.pane
+        if os.environ.get("TMUX"):
+            tmux("switch-client", "-t", pane.pane_id)
+            tmux("select-window", "-t", f"{pane.session}:{pane.window}")
+            tmux("select-pane", "-t", pane.pane_id)
+        else:
+            subprocess.run(["tmux", "attach-session", "-t", pane.session])
+
+    def run(self) -> int:
+        self.enter()
+        target: Agent | None = None
+        try:
+            self.refresh()
+            self.draw()
+            while True:
+                keys = self.read_keys(self.interval)
+                if not keys:
+                    self.refresh()
+                    self.draw()
+                    continue
+                jump = False
+                quit_ = False
+                for key in keys:
+                    if key in ("q", "esc", "quit"):
+                        quit_ = True
+                        break
+                    if not self.agents:
+                        continue
+                    if key in ("up", "k"):
+                        self.cursor = (self.cursor - 1) % len(self.agents)
+                    elif key in ("down", "j"):
+                        self.cursor = (self.cursor + 1) % len(self.agents)
+                    elif key in ("home", "g"):
+                        self.cursor = 0
+                    elif key in ("end", "G"):
+                        self.cursor = len(self.agents) - 1
+                    elif key == "r":
+                        self.selected_pane = ""
+                        self.refresh()
+                    elif key == "enter":
+                        target = self.agents[self.cursor]
+                        jump = True
+                        break
+                    self.selected_pane = self.agents[self.cursor].pane.pane_id
+                if quit_ or jump:
+                    break
+                self.draw()
+        finally:
+            self.leave()
+        if target is not None:
+            self.jump(target)
+        return 0
+
+
+# --------------------------------------------------------------------------
+# main
+# --------------------------------------------------------------------------
+
+def main(argv: list[str] | None = None) -> int:
+    parser = argparse.ArgumentParser(
+        prog=os.path.basename(sys.argv[0]) or "sessions-ls",
+        description="List terminal coding agents running in tmux panes and jump to them.",
+    )
+    parser.add_argument("--plain", "-l", action="store_true",
+                        help="print the list and exit (like ls -lht)")
+    parser.add_argument("--json", action="store_true", help="print JSON and exit")
+    parser.add_argument("--header", action="store_true",
+                        help="print a header row in plain mode")
+    parser.add_argument("--watch", "-w", type=float, metavar="SECONDS",
+                        help="plain mode: reprint the list every N seconds")
+    parser.add_argument("--interval", type=float, default=1.0, metavar="SECONDS",
+                        help="interactive refresh interval (default: 1s)")
+    parser.add_argument("--version", action="version", version=f"sessions-ls {VERSION}")
+    parser.add_argument("extra", nargs="*", help=argparse.SUPPRESS)
+    args = parser.parse_args(argv)
+
+    if not shutil.which("tmux"):
+        print("sessions-ls: tmux not found", file=sys.stderr)
+        return 1
+    if not tmux("list-panes", "-a", "-F", "#{pane_id}").strip():
+        print("sessions-ls: no tmux server running", file=sys.stderr)
+        return 1
+
+    opencode = OpenCodeIndex()
+    claude = ClaudeIndex()
+
+    interactive = (
+        not args.plain and not args.json and not args.watch
+        and sys.stdin.isatty() and sys.stdout.isatty()
+    )
+
+    if interactive:
+        interval = max(0.05, args.interval)
+        return Picker(opencode, claude, interval).run()
+
+    if args.json:
+        print(as_json(collect(opencode, claude)))
+        return 0
+
+    if args.watch:
+        try:
+            while True:
+                text = plain(collect(opencode, claude), header=args.header)
+                if sys.stdout.isatty():
+                    sys.stdout.write("\x1b[H\x1b[J")
+                print(text, flush=True)
+                time.sleep(args.watch)
+        except KeyboardInterrupt:
+            return 0
+
+    text = plain(collect(opencode, claude), header=args.header)
+    if text:
+        print(text)
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

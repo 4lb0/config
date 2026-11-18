@@ -29,6 +29,9 @@ mkdir -p ~/.config/cliamp
 ln -sf $CONFIG_PATH/cliamp.toml ~/.config/cliamp/config.toml
 [ -L ~/.config/zsh ] && rm ~/.config/zsh
 ln -sf $CONFIG_PATH/zsh ~/.config/zsh
+mkdir -p ~/bin
+ln -sf $CONFIG_PATH/bin/sessions-ls ~/bin/sessions-ls
+ln -sf $CONFIG_PATH/bin/sessions-ls ~/bin/sl
 
 P10K_DIR="$HOME/.powerlevel10k"
 P10K_REPO="https://github.com/romkatv/powerlevel10k.git"
