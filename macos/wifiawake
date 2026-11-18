@@ -125,6 +125,12 @@ disablesleep() {
   "$PMSET" -g 2>/dev/null | awk '/disablesleep/{print $2; exit}'
 }
 
+# True only when a NOPASSWD rule matches, so a cached sudo timestamp does not
+# make the setup look finished.
+pmset_ready() {
+  "$SUDO" -n -l "$PMSET" -a disablesleep 1 2>/dev/null | grep -q NOPASSWD
+}
+
 caffeinate_alive() {
   local pid
   pid=$(cat "$CAFF_PIDFILE" 2>/dev/null) || return 1
@@ -292,14 +298,16 @@ cmd_status() {
   fi
   printf 'mode        : %s\n' "$MODE"
   if [ "$MODE" = "pmset" ]; then
-    if "$SUDO" -n -l "$PMSET" -a disablesleep 1 >/dev/null 2>&1; then
+    if pmset_ready; then
       printf 'pmset       : ready (passwordless sudo ok)\n'
     else
       printf 'pmset       : NOT ready — run: wifiawake allow-pmset\n'
     fi
   fi
 
+  DAEMON_UP=0
   if pid=$(cat "$PIDFILE" 2>/dev/null) && [ -n "$pid" ] && kill -0 "$pid" 2>/dev/null; then
+    DAEMON_UP=1
     printf 'daemon      : running (pid %s)\n' "$pid"
   else
     printf 'daemon      : not running\n'
@@ -315,6 +323,9 @@ cmd_status() {
     printf 'agent       : loaded (%s)\n' "$LABEL"
   else
     printf 'agent       : not loaded\n'
+  fi
+  if [ "$DAEMON_UP" = 0 ] && [ "$(disablesleep)" = "1" ]; then
+    printf 'warning     : sleep lock is ON with nobody watching — run: wifiawake stop\n'
   fi
   printf 'log         : %s\n' "$LOG"
 }
@@ -366,9 +377,12 @@ EOF
 }
 
 load_agent() {
-  local plist=$1 label=$2
+  local plist=$1 label=$2 out
   launchctl bootout "gui/$(id -u)/$label" 2>/dev/null
-  launchctl bootstrap "gui/$(id -u)" "$plist"
+  if ! out=$(launchctl bootstrap "gui/$(id -u)" "$plist" 2>&1); then
+    echo "launchctl: $out" >&2
+    return 1
+  fi
 }
 
 cmd_install() {
@@ -378,10 +392,16 @@ cmd_install() {
   load_agent "$PLIST" "$LABEL" || { echo "error: could not load $PLIST" >&2; return 1; }
   load_agent "$WATCHDOG_PLIST" "$LABEL.watchdog" 2>/dev/null
   echo "installed and started: $PLIST (+ watchdog)"
-  if [ "$MODE" = "pmset" ] && ! "$SUDO" -n -l "$PMSET" -a disablesleep 1 >/dev/null 2>&1; then
-    echo
-    echo "ONE MORE STEP: 'pmset disablesleep' needs a password once:"
-    echo "  wifiawake allow-pmset"
+  if [ "$MODE" = "pmset" ] && ! pmset_ready; then
+    if [ -t 0 ]; then
+      echo
+      echo "'pmset disablesleep' needs a sudoers rule (one password, once):"
+      cmd_allow_pmset || true
+    else
+      echo
+      echo "ONE MORE STEP: 'pmset disablesleep' needs a password once:"
+      echo "  wifiawake allow-pmset"
+    fi
   fi
 }
 
@@ -400,7 +420,7 @@ cmd_start() {
   if load_agent "$PLIST" "$LABEL"; then
     echo "started"
   else
-    echo "error: could not start $LABEL" >&2
+    echo "error: could not start $LABEL (try: wifiawake restart)" >&2
     return 1
   fi
 }
@@ -454,11 +474,12 @@ EOF
 }
 
 cmd_allow_pmset() {
-  local tmp
+  local tmp user
+  user=$(id -un)
   tmp=$(mktemp)
   cat >"$tmp" <<EOF
 # wifiawake: toggle sleep prevention without a password
-$USER ALL=(root) NOPASSWD: $PMSET -a disablesleep 1, $PMSET -a disablesleep 0
+$user ALL=(root) NOPASSWD: $PMSET -a disablesleep 1, $PMSET -a disablesleep 0
 EOF
   if ! "$SUDO" "$VISUDO" -cf "$tmp" >/dev/null; then
     rm -f "$tmp"
@@ -496,6 +517,8 @@ usage: wifiawake <command>
   allow-pmset add a sudoers rule so MODE="pmset" works without a password
   log [n]     tail the log (default 40 lines)
 
+run it as your user, never with sudo (only the pmset call needs root).
+
 rule: hold while $WIFI_IFACE has an IP and battery > ${BATTERY_MIN}% (or on AC),
       release ${GRACE}s after the network or the battery condition is lost.
 
@@ -503,6 +526,25 @@ config: $CONFIG
 log:    $LOG
 EOF
 }
+
+require_user() {
+  [ "$(id -u)" = "0" ] || return 0
+  cat >&2 <<EOF
+error: don't run 'wifiawake $1' with sudo.
+
+wifiawake manages YOUR LaunchAgent, so it has to run as your user.
+Only the 'pmset disablesleep' call needs root, and 'allow-pmset' asks for the
+password by itself.
+
+  wifiawake $1
+EOF
+  exit 1
+}
+
+case "${1:-}" in
+  help | -h | --help | version) ;;
+  *) require_user "${1:-}" ;;
+esac
 
 case "${1:-}" in
   run) cmd_run ;;

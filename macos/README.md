@@ -19,13 +19,16 @@ charger does not drop the hold.
 
 ```sh
 ln -sf "$PWD/macos/wifiawake" ~/.local/bin/wifiawake
-wifiawake install     # LaunchAgent + watchdog, starts at login
-wifiawake allow-pmset # ONE password prompt: lets it run `pmset disablesleep`
+wifiawake install     # LaunchAgent + watchdog, starts at login (asks for the sudo rule once)
 wifiawake status
 ```
 
 `install.sh` already links the script into `~/.local/bin`; the agents are only
 installed when you ask for them.
+
+**Run it as your user, never with `sudo`.** The agents are per-user LaunchAgents;
+only the `pmset` call needs root, and `allow-pmset` (called by `install` when it
+has a terminal) asks for the password itself.
 
 ## Why `pmset` and not `caffeinate`
 
@@ -80,3 +83,12 @@ remove it with `sudo rm /etc/sudoers.d/wifiawake`.
   is the point of `disablesleep`.
 - Undo everything by hand if the script is gone:
   `sudo pmset -a disablesleep 0` and `launchctl bootout gui/$UID/com.albo.wifiawake`.
+
+## Troubleshooting
+
+| Symptom | Cause / fix |
+| --- | --- |
+| `Bootstrap failed: 125 ... Domain does not support specified action` | you ran it with `sudo`; run it as your user |
+| `pmset : NOT ready` in `status` | run `wifiawake allow-pmset` (one password) |
+| `status` shows `hold: none` while the rule says HOLD | the sudo rule is missing; the log has `needs passwordless sudo` |
+| lock stays on after a crash | the watchdog clears it within 2 min; `wifiawake stop` clears it now |
