@@ -1,0 +1,522 @@
+#!/bin/bash
+#
+# wifiawake — keep the Mac awake only while there is Wi-Fi and battery left.
+#
+# Holds sleep prevention while the Wi-Fi interface is associated (has an IP)
+# AND the battery is above BATTERY_MIN% (or the Mac is on AC power).
+# After losing the network/battery it waits GRACE seconds (so a quick network
+# switch or a replug does not drop the hold) and only then allows sleep.
+#
+# The default hold is `sudo pmset -a disablesleep 1`, which also survives a
+# closed lid. A watchdog job clears the lock if the daemon disappears.
+#
+set -uo pipefail
+
+VERSION="1.1.0"
+LABEL="com.albo.wifiawake"
+
+SELF=$(cd "$(dirname "$0")" && pwd -P)/$(basename "$0")
+
+LOG="${WIFIAWAKE_LOG:-$HOME/Library/Logs/wifiawake.log}"
+STATE="${WIFIAWAKE_STATE:-$HOME/Library/Application Support/wifiawake}"
+PIDFILE="$STATE/daemon.pid"
+CAFF_PIDFILE="$STATE/caffeinate.pid"
+PREV_FILE="$STATE/prev_disablesleep"
+HEARTBEAT="$STATE/heartbeat"
+CONFIG="${WIFIAWAKE_CONFIG:-$HOME/.config/wifiawake/config}"
+AGENTS="$HOME/Library/LaunchAgents"
+PLIST="$AGENTS/$LABEL.plist"
+WATCHDOG_PLIST="$AGENTS/$LABEL.watchdog.plist"
+
+PMSET="${PMSET:-/usr/bin/pmset}"
+IFCONFIG="${IFCONFIG:-/sbin/ifconfig}"
+CAFFEINATE="${CAFFEINATE:-/usr/bin/caffeinate}"
+SUDO="${SUDO:-/usr/bin/sudo}"
+VISUDO="${VISUDO:-/usr/sbin/visudo}"
+
+# Defaults: the config file (sourced below) overrides the environment, which
+# overrides these built-ins.
+WIFI_IFACE="${WIFI_IFACE:-en0}"
+BATTERY_MIN="${BATTERY_MIN:-15}"
+GRACE="${GRACE:-90}"
+POLL="${POLL:-20}"
+MODE="${MODE:-pmset}"
+
+[ -f "$CONFIG" ] && . "$CONFIG"
+
+# Runtime state set by the probes.
+POWER=""
+PCT=""
+WIFI=0
+WIFI_IP=""
+BATTERY_OK=1
+HOLDING=0
+WARNED_SUDO=0
+
+log() {
+  local ts
+  ts=$(date '+%Y-%m-%d %H:%M:%S')
+  mkdir -p "$(dirname "$LOG")"
+  printf '%s %s\n' "$ts" "$*" >>"$LOG"
+  [ -t 2 ] && printf '%s\n' "$*" >&2
+  return 0
+}
+
+rotate_log() {
+  [ -f "$LOG" ] || return 0
+  if [ "$(wc -c <"$LOG" | tr -d ' ')" -gt 524288 ]; then
+    tail -n 400 "$LOG" >"$LOG.tmp" 2>/dev/null && mv "$LOG.tmp" "$LOG"
+  fi
+}
+
+# --- probes -----------------------------------------------------------------
+
+read_power() {
+  local out
+  out=$("$PMSET" -g batt 2>/dev/null)
+  POWER="unknown"
+  case "$out" in
+    *"'AC Power'"*) POWER=ac ;;
+    *"'Battery Power'"*) POWER=battery ;;
+  esac
+  PCT=$(printf '%s\n' "$out" | grep -o '[0-9][0-9]*%' | head -n 1 | tr -d '%')
+  return 0
+}
+
+wifi_up() {
+  local out
+  WIFI_IP=""
+  [ -n "$WIFI_IFACE" ] || return 1
+  out=$("$IFCONFIG" "$WIFI_IFACE" 2>/dev/null) || return 1
+  printf '%s\n' "$out" | grep -q 'status: active' || return 1
+  WIFI_IP=$(printf '%s\n' "$out" | awk '/[[:space:]]inet /{print $2; exit}')
+  [ -n "$WIFI_IP" ]
+}
+
+battery_ok() {
+  BATTERY_OK=1
+  # On AC power the battery is charging, so the floor does not apply.
+  if [ "$POWER" != "ac" ] && [ -n "$PCT" ] && [ "$PCT" -le "$BATTERY_MIN" ]; then
+    BATTERY_OK=0
+  fi
+  return 0
+}
+
+describe() {
+  if [ "$WIFI" = 1 ]; then
+    printf 'wi-fi on %s (%s)' "$WIFI_IFACE" "$WIFI_IP"
+  else
+    printf 'no wi-fi on %s' "$WIFI_IFACE"
+  fi
+  if [ "$BATTERY_OK" = 1 ]; then
+    printf ', battery %s%% (%s)' "${PCT:-?}" "$POWER"
+  else
+    printf ', battery %s%% <= %s%%' "${PCT:-?}" "$BATTERY_MIN"
+  fi
+}
+
+# --- hold implementations ---------------------------------------------------
+
+pmset_set() {
+  "$SUDO" -n "$PMSET" -a disablesleep "$1" >/dev/null 2>&1
+}
+
+disablesleep() {
+  "$PMSET" -g 2>/dev/null | awk '/disablesleep/{print $2; exit}'
+}
+
+caffeinate_alive() {
+  local pid
+  pid=$(cat "$CAFF_PIDFILE" 2>/dev/null) || return 1
+  [ -n "$pid" ] && kill -0 "$pid" 2>/dev/null
+}
+
+start_caffeinate() {
+  caffeinate_alive && return 0
+  "$CAFFEINATE" -i -s -w $$ >/dev/null 2>&1 &
+  printf '%s\n' "$!" >"$CAFF_PIDFILE"
+  disown %+ 2>/dev/null
+}
+
+stop_caffeinate() {
+  local pid
+  pid=$(cat "$CAFF_PIDFILE" 2>/dev/null)
+  if [ -n "${pid:-}" ] && kill -0 "$pid" 2>/dev/null; then
+    kill "$pid" 2>/dev/null
+  fi
+  rm -f "$CAFF_PIDFILE"
+}
+
+begin_pmset_hold() {
+  local cur
+  cur=$(disablesleep)
+  [ "$cur" = "1" ] && return 0
+  # Remember what was there before so release does not clobber a manual setting.
+  printf '%s\n' "${cur:-0}" >"$PREV_FILE" 2>/dev/null
+  pmset_set 1
+}
+
+end_pmset_hold() {
+  local prev=0
+  [ -f "$PREV_FILE" ] && prev=$(cat "$PREV_FILE" 2>/dev/null)
+  case "$prev" in 0 | 1) ;; *) prev=0 ;; esac
+  if pmset_set "$prev"; then
+    [ "$prev" = "1" ] || rm -f "$PREV_FILE"
+  else
+    log "warning: could not reset disablesleep (run: sudo pmset -a disablesleep 0)"
+  fi
+}
+
+ensure_hold() {
+  if [ "$MODE" = "pmset" ]; then
+    if begin_pmset_hold; then
+      return 0
+    fi
+    if [ "$WARNED_SUDO" = 0 ]; then
+      WARNED_SUDO=1
+      log "error: 'pmset -a disablesleep' needs passwordless sudo; run: wifiawake allow-pmset"
+    fi
+    return 1
+  fi
+  start_caffeinate || { log "error: could not start caffeinate"; return 1; }
+}
+
+release_hold() {
+  stop_caffeinate
+  if [ "$(disablesleep)" = "1" ]; then
+    end_pmset_hold
+  else
+    rm -f "$PREV_FILE"
+  fi
+  HOLDING=0
+  rm -f "$HEARTBEAT"
+}
+
+# --- daemon -----------------------------------------------------------------
+
+cleanup() {
+  trap - EXIT INT TERM HUP
+  release_hold
+  rm -f "$PIDFILE" "$HEARTBEAT"
+  log "stopped"
+}
+
+cmd_run() {
+  mkdir -p "$STATE" "$(dirname "$LOG")"
+  printf '%s\n' $$ >"$PIDFILE"
+  rotate_log
+  trap cleanup EXIT
+  trap 'exit 0' INT TERM HUP
+
+  log "started (iface=$WIFI_IFACE, min=${BATTERY_MIN}%, grace=${GRACE}s, poll=${POLL}s, mode=$MODE)"
+
+  local lost_at=0 now desc
+  while :; do
+    date +%s >"$HEARTBEAT" 2>/dev/null
+    read_power
+    if wifi_up; then WIFI=1; else WIFI=0; fi
+    battery_ok
+    desc=$(describe)
+
+    if [ "$WIFI" = 1 ] && [ "$BATTERY_OK" = 1 ]; then
+      [ "$lost_at" -ne 0 ] && log "condition back: $desc"
+      lost_at=0
+      if [ "$HOLDING" = 0 ]; then
+        if ensure_hold; then
+          HOLDING=1
+          log "holding: $desc"
+        fi
+      fi
+    else
+      if [ "$HOLDING" = 0 ] && [ "$MODE" = "pmset" ] && [ "$(disablesleep)" = "1" ]; then
+        pmset_set 0 && log "cleared stale disablesleep"
+      fi
+      if [ "$HOLDING" = 1 ]; then
+        now=$(date +%s)
+        if [ "$lost_at" -eq 0 ]; then
+          lost_at=$now
+          log "releasing in ${GRACE}s: $desc"
+        fi
+        if [ $((now - lost_at)) -ge "$GRACE" ]; then
+          release_hold
+          lost_at=0
+          log "sleep allowed: $desc"
+        fi
+      fi
+    fi
+
+    sleep "$POLL" &
+    wait $! 2>/dev/null
+  done
+}
+
+# Safety net: if the lock is on but the daemon is gone or stuck, drop the lock.
+cmd_watchdog() {
+  [ "$MODE" = "pmset" ] || return 0
+  [ "$(disablesleep)" = "1" ] || return 0
+  local pid hb now limit
+  now=$(date +%s)
+  limit=$((POLL * 6 + 120))
+  pid=$(cat "$PIDFILE" 2>/dev/null)
+  hb=$(cat "$HEARTBEAT" 2>/dev/null)
+  if [ -n "${pid:-}" ] && kill -0 "$pid" 2>/dev/null && [ -n "${hb:-}" ] &&
+    [ $((now - hb)) -le "$limit" ]; then
+    return 0
+  fi
+  if pmset_set 0; then
+    rm -f "$PIDFILE" "$HEARTBEAT" "$PREV_FILE"
+    log "watchdog: released sleep lock (daemon gone or stuck)"
+  fi
+}
+
+# --- commands ---------------------------------------------------------------
+
+cmd_status() {
+  local pid
+  read_power
+  if wifi_up; then WIFI=1; else WIFI=0; fi
+  battery_ok
+
+  printf 'wifiawake   : %s\n' "$VERSION"
+  printf 'interface   : %s\n' "$WIFI_IFACE"
+  if [ "$WIFI" = 1 ]; then
+    printf 'network     : connected (%s)\n' "$WIFI_IP"
+  else
+    printf 'network     : not connected\n'
+  fi
+  printf 'power       : %s, battery %s%% (floor %s%%)\n' "$POWER" "${PCT:-?}" "$BATTERY_MIN"
+  if [ "$WIFI" = 1 ] && [ "$BATTERY_OK" = 1 ]; then
+    printf 'decision    : HOLD (wi-fi + battery ok)\n'
+  else
+    printf 'decision    : allow sleep (%s)\n' "$(describe)"
+  fi
+  printf 'mode        : %s\n' "$MODE"
+  if [ "$MODE" = "pmset" ]; then
+    if "$SUDO" -n -l "$PMSET" -a disablesleep 1 >/dev/null 2>&1; then
+      printf 'pmset       : ready (passwordless sudo ok)\n'
+    else
+      printf 'pmset       : NOT ready — run: wifiawake allow-pmset\n'
+    fi
+  fi
+
+  if pid=$(cat "$PIDFILE" 2>/dev/null) && [ -n "$pid" ] && kill -0 "$pid" 2>/dev/null; then
+    printf 'daemon      : running (pid %s)\n' "$pid"
+  else
+    printf 'daemon      : not running\n'
+  fi
+  if pid=$(cat "$CAFF_PIDFILE" 2>/dev/null) && [ -n "$pid" ] && kill -0 "$pid" 2>/dev/null; then
+    printf 'hold        : caffeinate (pid %s)\n' "$pid"
+  elif [ "$(disablesleep)" = "1" ]; then
+    printf 'hold        : pmset disablesleep=1 (survives lid close)\n'
+  else
+    printf 'hold        : none\n'
+  fi
+  if launchctl print "gui/$(id -u)/$LABEL" >/dev/null 2>&1; then
+    printf 'agent       : loaded (%s)\n' "$LABEL"
+  else
+    printf 'agent       : not loaded\n'
+  fi
+  printf 'log         : %s\n' "$LOG"
+}
+
+write_plist() {
+  local path=$1 label=$2 command=$3 interval=$4 extra
+  if [ -n "$interval" ]; then
+    extra="  <key>StartInterval</key>
+  <integer>$interval</integer>"
+  else
+    extra="  <key>RunAtLoad</key>
+  <true/>
+  <key>KeepAlive</key>
+  <dict>
+    <key>SuccessfulExit</key>
+    <false/>
+  </dict>
+  <key>ThrottleInterval</key>
+  <integer>15</integer>"
+  fi
+  cat >"$path" <<EOF
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>Label</key>
+  <string>$label</string>
+  <key>ProgramArguments</key>
+  <array>
+    <string>/bin/bash</string>
+    <string>$SELF</string>
+    <string>$command</string>
+  </array>
+  <key>EnvironmentVariables</key>
+  <dict>
+    <key>PATH</key>
+    <string>/usr/bin:/bin:/usr/sbin:/sbin</string>
+  </dict>
+  <key>ProcessType</key>
+  <string>Background</string>
+  <key>StandardOutPath</key>
+  <string>$HOME/Library/Logs/wifiawake.out.log</string>
+  <key>StandardErrorPath</key>
+  <string>$HOME/Library/Logs/wifiawake.out.log</string>
+$extra
+</dict>
+</plist>
+EOF
+}
+
+load_agent() {
+  local plist=$1 label=$2
+  launchctl bootout "gui/$(id -u)/$label" 2>/dev/null
+  launchctl bootstrap "gui/$(id -u)" "$plist"
+}
+
+cmd_install() {
+  mkdir -p "$AGENTS" "$STATE" "$(dirname "$LOG")"
+  write_plist "$PLIST" "$LABEL" run ""
+  write_plist "$WATCHDOG_PLIST" "$LABEL.watchdog" watchdog 120
+  load_agent "$PLIST" "$LABEL" || { echo "error: could not load $PLIST" >&2; return 1; }
+  load_agent "$WATCHDOG_PLIST" "$LABEL.watchdog" 2>/dev/null
+  echo "installed and started: $PLIST (+ watchdog)"
+  if [ "$MODE" = "pmset" ] && ! "$SUDO" -n -l "$PMSET" -a disablesleep 1 >/dev/null 2>&1; then
+    echo
+    echo "ONE MORE STEP: 'pmset disablesleep' needs a password once:"
+    echo "  wifiawake allow-pmset"
+  fi
+}
+
+cmd_uninstall() {
+  launchctl bootout "gui/$(id -u)/$LABEL.watchdog" 2>/dev/null
+  launchctl bootout "gui/$(id -u)/$LABEL" 2>/dev/null
+  rm -f "$PLIST" "$WATCHDOG_PLIST"
+  release_hold
+  rm -f "$PIDFILE"
+  echo "uninstalled: $PLIST"
+}
+
+cmd_start() {
+  [ -f "$PLIST" ] || { cmd_install; return; }
+  load_agent "$WATCHDOG_PLIST" "$LABEL.watchdog" 2>/dev/null
+  if load_agent "$PLIST" "$LABEL"; then
+    echo "started"
+  else
+    echo "error: could not start $LABEL" >&2
+    return 1
+  fi
+}
+
+cmd_stop() {
+  launchctl bootout "gui/$(id -u)/$LABEL.watchdog" 2>/dev/null
+  launchctl bootout "gui/$(id -u)/$LABEL" 2>/dev/null
+  if pid=$(cat "$PIDFILE" 2>/dev/null) && [ -n "$pid" ] && kill -0 "$pid" 2>/dev/null; then
+    kill "$pid" 2>/dev/null
+  fi
+  release_hold
+  rm -f "$PIDFILE"
+  echo "stopped (sleep lock released)"
+}
+
+cmd_restart() {
+  cmd_stop >/dev/null
+  sleep 1
+  cmd_start
+}
+
+cmd_config() {
+  if [ ! -f "$CONFIG" ]; then
+    mkdir -p "$(dirname "$CONFIG")"
+    cat >"$CONFIG" <<'EOF'
+# wifiawake settings (sourced by the script)
+
+# Interface to watch. "en0" is the built-in Wi-Fi on Apple Silicon.
+WIFI_IFACE="en0"
+
+# Allow sleep when the battery is at or below this percentage (on battery only).
+BATTERY_MIN=15
+
+# Seconds to wait after losing Wi-Fi/battery before allowing sleep, so a quick
+# network switch (or plugging the charger) does not drop the hold.
+GRACE=90
+
+# Seconds between checks.
+POLL=20
+
+# pmset      = sudo pmset -a disablesleep 1, survives a closed lid (needs
+#              `wifiawake allow-pmset` once).
+# caffeinate = no root, idle sleep only, does NOT survive the lid (fallback).
+MODE="pmset"
+EOF
+    echo "created $CONFIG"
+  else
+    echo "$CONFIG"
+  fi
+  sed -n '1,200p' "$CONFIG"
+}
+
+cmd_allow_pmset() {
+  local tmp
+  tmp=$(mktemp)
+  cat >"$tmp" <<EOF
+# wifiawake: toggle sleep prevention without a password
+$USER ALL=(root) NOPASSWD: $PMSET -a disablesleep 1, $PMSET -a disablesleep 0
+EOF
+  if ! "$SUDO" "$VISUDO" -cf "$tmp" >/dev/null; then
+    rm -f "$tmp"
+    echo "error: invalid sudoers rule" >&2
+    return 1
+  fi
+  if ! "$SUDO" /usr/bin/install -m 0440 -o root -g wheel "$tmp" /etc/sudoers.d/wifiawake; then
+    rm -f "$tmp"
+    return 1
+  fi
+  rm -f "$tmp"
+  echo "ok: pmset disablesleep now runs without a password"
+  echo "the daemon picks it up on its next check (or run: wifiawake restart)"
+}
+
+cmd_log() {
+  [ -f "$LOG" ] || { echo "no log yet ($LOG)"; return 0; }
+  tail -n "${1:-40}" "$LOG"
+}
+
+usage() {
+  cat <<EOF
+wifiawake $VERSION — keep the Mac awake while on Wi-Fi and above the battery floor
+
+usage: wifiawake <command>
+
+  run         run the watcher in the foreground (used by launchd)
+  status      show network, battery, decision and hold state
+  install     install the LaunchAgent + watchdog and start them
+  uninstall   remove both agents (and release any hold)
+  start       load the agents (installs them first if needed)
+  stop        unload the agents and release the hold
+  restart     stop + start
+  config      create/print the config file
+  allow-pmset add a sudoers rule so MODE="pmset" works without a password
+  log [n]     tail the log (default 40 lines)
+
+rule: hold while $WIFI_IFACE has an IP and battery > ${BATTERY_MIN}% (or on AC),
+      release ${GRACE}s after the network or the battery condition is lost.
+
+config: $CONFIG
+log:    $LOG
+EOF
+}
+
+case "${1:-}" in
+  run) cmd_run ;;
+  watchdog) cmd_watchdog ;;
+  status) cmd_status ;;
+  install) cmd_install ;;
+  uninstall) cmd_uninstall ;;
+  start) cmd_start ;;
+  stop) cmd_stop ;;
+  restart) cmd_restart ;;
+  config) cmd_config ;;
+  allow-pmset) cmd_allow_pmset ;;
+  log) cmd_log "${2:-40}" ;;
+  version) echo "$VERSION" ;;
+  help | -h | --help) usage ;;
+  *) usage; exit 2 ;;
+esac

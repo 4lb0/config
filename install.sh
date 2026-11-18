@@ -25,6 +25,10 @@ ln -sf $CONFIG_PATH/opencode/AGENTS.md ~/.config/opencode/AGENTS.md
 ln -sf $CONFIG_PATH/opencode-tui.json ~/.config/opencode/cli.json
 # Resetting the config also resets the tmux "SAVE" indicator
 sh $CONFIG_PATH/opencode/oc-mode sync 2>/dev/null || true
+if [ "$(uname -s)" = "Darwin" ]; then
+  mkdir -p ~/.local/bin
+  ln -sf $CONFIG_PATH/macos/wifiawake ~/.local/bin/wifiawake
+fi
 mkdir -p ~/.config/cliamp
 ln -sf $CONFIG_PATH/cliamp.toml ~/.config/cliamp/config.toml
 [ -L ~/.config/zsh ] && rm ~/.config/zsh
