@@ -42,6 +42,7 @@ awaiting claude   pausa:4.1  6h      Sincronización de datos del tablero  ~/wor
 | ---------- | -------------------------------------------------------- |
 | `working`  | the agent is busy (tool running / generating)             |
 | `awaiting` | last turn finished, it is waiting for your next message   |
+| `question` | the agent asked you a question, the dialog is on screen    |
 | `approval` | a permission prompt is on screen, the agent is blocked    |
 | `unknown`  | process found but its session could not be read           |
 
@@ -57,8 +58,8 @@ awaiting claude   pausa:4.1  6h      Sincronización de datos del tablero  ~/wor
 * **claude sessions**: transcripts in `~/.claude/projects/<munged-cwd>/*.jsonl`.
   The last `ai-title` entry matches the pane title; the last real transcript
   entry tells whether the turn ended.
-* **approvals**: the bottom lines of the pane are checked for permission
-  prompts.
+* **prompts**: the bottom lines of the pane are checked for permission
+  prompts (`approval`) and interactive question dialogs (`question`).
 
 No dependencies beyond the Python 3 standard library.
 

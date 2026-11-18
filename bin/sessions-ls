@@ -30,7 +30,7 @@ import tty
 from datetime import datetime, timezone
 from dataclasses import dataclass
 
-VERSION = "0.2.1"
+VERSION = "0.2.2"
 
 HOME = os.path.expanduser("~")
 OPENCODE_DB = os.environ.get(
@@ -67,9 +67,17 @@ APPROVAL_RE = re.compile(
     re.IGNORECASE,
 )
 
+QUESTION_RE = re.compile(
+    r"(Enter to select"          # Claude Code's question tool
+    r"|enter submit"             # OpenCode's question panel
+    r"|Type your own answer)",   # OpenCode free-form option
+    re.IGNORECASE,
+)
+
 STATUS_COLORS = {
     "working": "\x1b[32m",
     "awaiting": "\x1b[33m",
+    "question": "\x1b[36m",
     "approval": "\x1b[1;31m",
     "unknown": "\x1b[2m",
 }
@@ -582,13 +590,17 @@ def collect(opencode: OpenCodeIndex, claude: ClaudeIndex) -> list[Agent]:
             confirmed=confirmed,
         ))
 
-    # Approval detection: a visible prompt outranks "working"/"unknown".
-    # Only busy panes are checked (an approval prompt means a job is waiting).
+    # Interactive dialogs outrank "working"/"unknown": a visible permission
+    # prompt or question means the agent is blocked waiting for the user.
     for agent in agents:
         if agent.status in ("working", "unknown"):
             prompt = pane_prompt(agent.pane.pane_id)
-            if prompt and APPROVAL_RE.search(prompt):
+            if not prompt:
+                continue
+            if APPROVAL_RE.search(prompt):
                 agent.status = "approval"
+            elif QUESTION_RE.search(prompt):
+                agent.status = "question"
 
     agents.sort(key=lambda a: (a.activity or 0), reverse=True)
     return agents
@@ -754,6 +766,7 @@ class Picker:
         now = time.time()
         working = sum(1 for a in self.agents if a.status == "working")
         waiting = sum(1 for a in self.agents if a.status == "awaiting")
+        question = sum(1 for a in self.agents if a.status == "question")
         approval = sum(1 for a in self.agents if a.status == "approval")
 
         title = "sessions-ls"
@@ -761,11 +774,11 @@ class Picker:
         summary = f"{len(self.agents)} agents"
         plain_bits, color_bits = [], []
         for count, label in ((working, "working"), (waiting, "awaiting"),
-                             (approval, "approval")):
+                             (question, "question"), (approval, "approval")):
             if count:
-                plain_bits.append(f"{count} {label}")
-                color_bits.append(self.paint(f"{count} {label}",
-                                             STATUS_COLORS[label]))
+                text = f"{count} {label}" + ("s" if label == "question" and count > 1 else "")
+                plain_bits.append(text)
+                color_bits.append(self.paint(text, STATUS_COLORS[label]))
         clock = f"updated {time.strftime('%H:%M:%S')}"
         if plain_bits:
             full_plain = f"{summary}  ·  " + "  ·  ".join(plain_bits)
@@ -813,6 +826,8 @@ class Picker:
                 glyph = SPINNER[self.frame % len(SPINNER)]
             elif a.status == "approval":
                 glyph = "!"
+            elif a.status == "question":
+                glyph = "?"
             elif a.status == "awaiting":
                 glyph = "○"
             else:
