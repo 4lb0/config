@@ -5,7 +5,8 @@ Shows every opencode / claude process that owns a tmux pane, with its session
 name, its status (working / awaiting / approval) and where it lives.
 
 Interactive picker (when stdout and stdin are a TTY): arrows/jk to move,
-Enter to jump to that pane, q to quit. The list refreshes itself every second.
+/ to search (fzf when installed), Enter to jump to that pane, q to quit.
+The list refreshes itself every second.
 
 In a pipeline (or with --plain) it prints an ``ls -lht``-ish listing sorted by
 most recently active, one row per agent, and exits.
@@ -27,10 +28,11 @@ import sys
 import termios
 import time
 import tty
+import unicodedata
 from datetime import datetime, timezone
 from dataclasses import dataclass
 
-VERSION = "0.2.2"
+VERSION = "0.3.0"
 
 HOME = os.path.expanduser("~")
 OPENCODE_DB = os.environ.get(
@@ -634,14 +636,63 @@ def short_path(path: str) -> str:
     return path
 
 
+ANSI_RE = re.compile(r"\x1b\[[0-9;]*m")
+
+
+def strip_ansi(text: str) -> str:
+    return ANSI_RE.sub("", text)
+
+
+def cell_width(text: str) -> int:
+    """Display width in terminal cells (wide CJK glyphs take two)."""
+    width = 0
+    for ch in text:
+        if unicodedata.combining(ch):
+            continue
+        width += 2 if unicodedata.east_asian_width(ch) in ("W", "F") else 1
+    return width
+
+
 def truncate(text: str, width: int) -> str:
     if width <= 0:
         return ""
-    if len(text) <= width:
+    if cell_width(text) <= width:
         return text
     if width == 1:
         return "…"
-    return text[: width - 1] + "…"
+    out: list[str] = []
+    used = 0
+    for ch in text:
+        w = cell_width(ch)
+        if used + w > width - 1:
+            break
+        out.append(ch)
+        used += w
+    return "".join(out) + "…"
+
+
+def truncate_left(text: str, width: int) -> str:
+    """Keep the tail of *text*, prefixing an ellipsis when it does not fit."""
+    if width <= 0:
+        return ""
+    if cell_width(text) <= width:
+        return text
+    if width == 1:
+        return "…"
+    out: list[str] = []
+    used = 0
+    for ch in reversed(text):
+        w = cell_width(ch)
+        if used + w > width - 1:
+            break
+        out.append(ch)
+        used += w
+    return "…" + "".join(reversed(out))
+
+
+def pad(text: str, width: int) -> str:
+    """Pad *text* (assumed ANSI-free) with spaces up to *width* cells."""
+    return text + " " * max(0, width - cell_width(text))
 
 
 def plain(agents: list[Agent], header: bool = False, color: bool | None = None) -> str:
@@ -704,6 +755,32 @@ def as_json(agents: list[Agent]) -> str:
 
 
 # --------------------------------------------------------------------------
+# search
+# --------------------------------------------------------------------------
+
+def fold_text(text: str) -> str:
+    """Lowercase and strip diacritics, so ``sincronizacion`` finds
+    ``Sincronización``."""
+    decomposed = unicodedata.normalize("NFKD", text)
+    plain = "".join(ch for ch in decomposed if not unicodedata.combining(ch))
+    return plain.casefold()
+
+
+def searchable_text(agent: Agent) -> str:
+    return fold_text(" ".join([
+        agent.name, agent.kind, agent.status, agent.pane.target,
+        agent.pane.session, agent.pane.path, short_path(agent.pane.path),
+    ]))
+
+
+def agent_matches(agent: Agent, query: str) -> bool:
+    """Every whitespace-separated term must appear somewhere in the row."""
+    haystack = searchable_text(agent)
+    terms = fold_text(query).split()
+    return all(term in haystack for term in terms)
+
+
+# --------------------------------------------------------------------------
 # interactive picker
 # --------------------------------------------------------------------------
 
@@ -712,9 +789,13 @@ class Picker:
         self.opencode = opencode
         self.claude = claude
         self.interval = interval
+        self.all_agents: list[Agent] = []
         self.agents: list[Agent] = []
         self.cursor = 0
         self.selected_pane = ""
+        self.query = ""
+        self.searching = False
+        self.pane_before_search = ""
         self.color = sys.stdout.isatty() and os.environ.get("NO_COLOR") is None
         self.frame = 0
 
@@ -739,18 +820,82 @@ class Picker:
             pass
 
     # -- data ----------------------------------------------------------
+    def apply_filter(self) -> None:
+        query = self.query.strip()
+        if query:
+            self.agents = [a for a in self.all_agents if agent_matches(a, query)]
+        else:
+            self.agents = list(self.all_agents)
+        self.cursor = max(0, min(self.cursor, len(self.agents) - 1))
+
     def refresh(self) -> None:
-        self.agents = collect(self.opencode, self.claude)
+        self.all_agents = collect(self.opencode, self.claude)
+        self.apply_filter()
         if self.selected_pane:
             for i, a in enumerate(self.agents):
                 if a.pane.pane_id == self.selected_pane:
                     self.cursor = i
                     break
-            else:
-                self.cursor = min(self.cursor, max(0, len(self.agents) - 1))
-        self.cursor = max(0, min(self.cursor, len(self.agents) - 1))
         if self.agents:
             self.selected_pane = self.agents[self.cursor].pane.pane_id
+
+    def edit_search(self, query: str) -> None:
+        self.query = query
+        self.apply_filter()
+        self.cursor = 0
+        self.selected_pane = self.agents[0].pane.pane_id if self.agents else ""
+
+    def start_search(self) -> None:
+        if shutil.which("fzf") and self.fzf_search():
+            return
+        self.pane_before_search = (
+            self.agents[self.cursor].pane.pane_id if self.agents else ""
+        )
+        self.searching = True
+        self.edit_search("")
+
+    def cancel_search(self) -> None:
+        self.searching = False
+        self.edit_search("")
+        if self.pane_before_search:
+            for i, a in enumerate(self.agents):
+                if a.pane.pane_id == self.pane_before_search:
+                    self.cursor = i
+                    break
+        if self.agents:
+            self.selected_pane = self.agents[self.cursor].pane.pane_id
+
+    def fzf_search(self) -> bool:
+        """Hand the current list to fzf; return whether fzf ran at all."""
+        if not self.agents:
+            return True
+        rows = [
+            f"{i}\t{a.kind}  {a.status}  {a.pane.target}  {a.name}  "
+            f"{short_path(a.pane.path)}"
+            for i, a in enumerate(self.agents)
+        ]
+        self.leave()
+        try:
+            proc = subprocess.run(
+                ["fzf", "--ignore-case", "--no-multi", "--delimiter=\t",
+                 "--with-nth=2..", "--prompt=agents> "],
+                input="\n".join(rows) + ("\n" if rows else ""),
+                capture_output=True, text=True,
+            )
+        except OSError:
+            return False
+        finally:
+            self.enter()
+        if proc.returncode != 0 or not proc.stdout.strip():
+            return True  # cancelled: keep the normal list
+        try:
+            index = int(proc.stdout.split("\t", 1)[0])
+        except ValueError:
+            return True
+        if 0 <= index < len(self.agents):
+            self.cursor = index
+            self.selected_pane = self.agents[index].pane.pane_id
+        return True
 
     # -- drawing -------------------------------------------------------
     def paint(self, text: str, code: str) -> str:
@@ -771,7 +916,10 @@ class Picker:
 
         title = "sessions-ls"
         header = self.paint(title, BOLD) if self.color else title
-        summary = f"{len(self.agents)} agents"
+        if self.query:
+            summary = f"{len(self.agents)}/{len(self.all_agents)} agents"
+        else:
+            summary = f"{len(self.agents)} agents"
         plain_bits, color_bits = [], []
         for count, label in ((working, "working"), (waiting, "awaiting"),
                              (question, "question"), (approval, "approval")):
@@ -791,11 +939,11 @@ class Picker:
             summary_plain = summary
 
         left_visible = f"  {title}   {summary_plain}"
-        if len(left_visible) + len(clock) + 2 > budget:
+        if cell_width(left_visible) + cell_width(clock) + 2 > budget:
             lines = [truncate(left_visible, budget)]
         else:
-            pad = max(1, budget - len(left_visible) - len(clock) - 1)
-            lines = [f"  {header}   {summary}" + " " * pad
+            gap = max(1, budget - cell_width(left_visible) - cell_width(clock) - 1)
+            lines = [f"  {header}   {summary}" + " " * gap
                      + self.paint(clock, DIM)]
         rule = self.paint("─" * budget, DIM)
         lines.append(rule)
@@ -838,8 +986,8 @@ class Picker:
                 status = STATUS_COLORS.get(a.status, "") + status + RESET
             kind = a.kind.ljust(8)
             age = human_age(a.activity, now).rjust(4)
-            target = truncate(a.pane.target, 12).ljust(12)
-            name = truncate(a.name, name_w).ljust(name_w)
+            target = pad(truncate(a.pane.target, 12), 12)
+            name = pad(truncate(a.name, name_w), name_w)
             path = short_path(a.pane.path)
 
             line = f" {mark} {glyph} {status}"
@@ -848,31 +996,53 @@ class Picker:
             if show_age:
                 line += f" {age}"
             line += f"  {target} {name}"
-            room = budget - len(re.sub(r"\x1b\[[0-9;]*m", "", line)) - 2
+            room = budget - cell_width(strip_ansi(line)) - 2
             if room > 10:
                 line += "  " + self.paint(truncate(path, room), DIM)
-            if selected:
-                if self.color:
-                    plain_line = re.sub(r"\x1b\[[0-9;]*m", "", line)
-                    line = "\x1b[7m" + plain_line.ljust(budget) + RESET
+            if selected and self.color:
+                # Highlight the whole row, including the padding, so no
+                # leftover background survives when the cursor moves away.
+                plain_line = strip_ansi(line).rstrip()
+                line = "\x1b[7m" + pad(plain_line, budget) + RESET
             else:
                 line = line.rstrip()
             lines.append(line)
 
         if not self.agents:
-            lines.append("  no running opencode/claude panes found")
+            if self.query:
+                lines.append(f"  no matches for /{truncate(self.query, budget - 18)}")
+            else:
+                lines.append("  no running opencode/claude panes found")
 
-        target = self.agents[self.cursor].pane.target if self.agents else ""
-        hint = f"  ↑↓/jk move   ⏎ jump{f' to {target}' if target else ''}   " \
-               "g/G top/bottom   r resort   q quit"
-        if len(hint) > budget:
-            hint = "  ↑↓/jk move   ⏎ jump   g/G   r resort   q quit"
         lines.append(rule)
-        lines.append(hint[:budget])
+        if self.searching:
+            label = f"  /{self.query}"
+            tail = "   ⏎ jump   esc cancel   ⌫ erase"
+            if cell_width(label) + cell_width(tail) > budget:
+                tail = ""
+            if cell_width(label) > budget:
+                label = "  /" + truncate_left(self.query, budget - 3)
+            lines.append(self.paint(label, BOLD) + self.paint(tail, DIM))
+        else:
+            target = self.agents[self.cursor].pane.target if self.agents else ""
+            hint = f"  ↑↓/jk move   ⏎ jump{f' to {target}' if target else ''}   " \
+                   "/ search   g/G top/bottom   r resort   q quit"
+            if cell_width(hint) > budget:
+                hint = "  ↑↓/jk move   ⏎ jump   / search   g/G   r   q quit"
+            lines.append(truncate(hint, budget))
 
-        if not self.color:
-            lines = [line[:budget] for line in lines]
-        sys.stdout.write("\x1b[H" + "\r\n".join(lines) + "\x1b[J")
+        # Pad every row to the last usable column: a row that shrinks must
+        # erase whatever the previous frame left there.
+        rendered = []
+        for line in lines:
+            visible = strip_ansi(line)
+            if cell_width(visible) > budget:
+                line = truncate(visible, budget)
+                visible = line
+            rendered.append(
+                line + " " * max(0, budget - cell_width(visible)) + "\x1b[K"
+            )
+        sys.stdout.write("\x1b[H" + "\r\n".join(rendered) + "\x1b[J")
         sys.stdout.flush()
         self.frame += 1
 
@@ -936,9 +1106,37 @@ class Picker:
                 jump = False
                 quit_ = False
                 for key in keys:
-                    if key in ("q", "esc", "quit"):
+                    if key == "quit":
                         quit_ = True
                         break
+                    if self.searching:
+                        if key == "esc":
+                            self.cancel_search()
+                        elif key == "enter":
+                            if self.agents:
+                                target = self.agents[self.cursor]
+                                self.searching = False
+                                self.query = ""
+                                jump = True
+                                break
+                        elif key in ("up", "down") and self.agents:
+                            step = -1 if key == "up" else 1
+                            self.cursor = (self.cursor + step) % len(self.agents)
+                            self.selected_pane = \
+                                self.agents[self.cursor].pane.pane_id
+                        elif key in ("\x7f", "\x08"):
+                            self.edit_search(self.query[:-1])
+                        elif key == "\x15":  # C-u
+                            self.edit_search("")
+                        elif len(key) == 1 and key >= " ":
+                            self.edit_search(self.query + key)
+                        continue
+                    if key in ("q", "esc"):
+                        quit_ = True
+                        break
+                    if key == "/":
+                        self.start_search()
+                        continue
                     if not self.agents:
                         continue
                     if key in ("up", "k"):
@@ -956,7 +1154,9 @@ class Picker:
                         target = self.agents[self.cursor]
                         jump = True
                         break
-                    self.selected_pane = self.agents[self.cursor].pane.pane_id
+                    if self.agents:
+                        self.selected_pane = \
+                            self.agents[self.cursor].pane.pane_id
                 if quit_ or jump:
                     break
                 self.draw()
