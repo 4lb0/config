@@ -64,10 +64,14 @@ No dependencies beyond the Python 3 standard library.
 
 ## tmux binding
 
-Run it as a popup on a key of your choice:
+Bind it to a popup key, e.g. globally on `C-Space` with a fallback that keeps
+Neovim's own `C-Space` mapping intact:
 
 ```tmux
-bind-key a display-popup -E -w 110 -h 40 -T " sessions-ls " ~/bin/sessions-ls
+bind -n C-Space if-shell -F '#{==:#{pane_current_command},nvim}' \
+  'send-keys C-Space' \
+  'display-popup -E -b rounded -w 90% -h 60% -T agents ~/bin/sessions-ls'
+bind A display-popup -E -b rounded -w 90% -h 60% -T agents ~/bin/sessions-ls
 ```
 
 `Enter` switches the client to the selected pane, whether it lives in the
