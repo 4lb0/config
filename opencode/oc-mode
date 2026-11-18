@@ -1,0 +1,122 @@
+#!/bin/sh
+# OpenCode "save mode": run every agent that has a model on deepseek-flash,
+# instead of the more expensive glm-5.3 used by build/plan.
+#
+#   oc-mode on      switch to save mode
+#   oc-mode off     back to the repo's normal opencode.json
+#   oc-mode toggle  flip (used by the tmux binding)
+#   oc-mode status  print "SAVE" when on, nothing when off (tmux status bar)
+#
+# Save mode works by repointing ~/.config/opencode/opencode.json at a
+# generated profile in ~/.config/opencode/opencode.save.json, so the repo
+# stays clean and install.sh keeps working.
+#
+# Env: OPENCODE_SAVE_REPO  repo config dir (default ~/config/opencode)
+#      OC_MODE_NO_RELOAD=1 skip the OpenCode config reload (for tests)
+
+set -eu
+
+FLASH="opencode-go/deepseek-v4.1-flash"
+REPO="${OPENCODE_SAVE_REPO:-$HOME/config/opencode}"
+CFG_DIR="$HOME/.config/opencode"
+CFG="$CFG_DIR/opencode.json"
+SAVE="$CFG_DIR/opencode.save.json"
+NORMAL="$REPO/opencode.json"
+
+say() { printf '%s\n' "$1"; }
+
+notify() {
+  command -v tmux >/dev/null 2>&1 || return 0
+  tmux display-message "OpenCode save mode: $1" >/dev/null 2>&1 || true
+  tmux refresh-client -S >/dev/null 2>&1 || true
+}
+
+# Dracula-style block prepended to status-right while save mode is on
+SEG='#[fg=#282a36,bg=#f1fa8c,bold] Save Mode '
+# Anchored at the start of status-right; [^#]* covers the label text only,
+# so older labels are stripped too.
+SEG_RE='^#\[fg=#282a36,bg=#f1fa8c,bold\][^#]*'
+
+# Put/remove the save-mode block in the tmux status bar. The block is added
+# after dracula builds status-right (see .tmux.conf) and on every toggle.
+bar() {
+  command -v tmux >/dev/null 2>&1 || return 0
+  current=$(tmux show -gv status-right 2>/dev/null) || return 0
+  current=$(printf '%s' "$current" | sed "s/$SEG_RE//")
+  if is_save; then
+    tmux set -g status-right "$SEG$current" >/dev/null 2>&1 || true
+  else
+    tmux set -g status-right "$current" >/dev/null 2>&1 || true
+  fi
+  tmux refresh-client -S >/dev/null 2>&1 || true
+}
+
+sync() { bar; }
+
+reload() {
+  [ "${OC_MODE_NO_RELOAD:-0}" = "1" ] && return 0
+  command -v opencode >/dev/null 2>&1 || return 0
+  opencode api post /api/location/reload >/dev/null 2>&1 || true
+}
+
+is_save() {
+  [ -L "$CFG" ] && [ "$(readlink "$CFG")" = "$SAVE" ]
+}
+
+check_link() {
+  if [ -e "$CFG" ] && [ ! -L "$CFG" ]; then
+    say "$CFG is a regular file; run install.sh so it links into $REPO" >&2
+    exit 1
+  fi
+}
+
+write_save() {
+  [ -f "$NORMAL" ] || { say "missing $NORMAL" >&2; exit 1; }
+  command -v jq >/dev/null 2>&1 || { say "jq is required" >&2; exit 1; }
+
+  jq --arg model "$FLASH" '
+    .model = $model
+    | .agents |= with_entries(
+        if (.value | type) == "object" and (.value | has("model"))
+        then .value.model = $model
+        else . end
+      )
+  ' "$NORMAL" > "$SAVE.tmp"
+  mv "$SAVE.tmp" "$SAVE"
+}
+
+save_on() {
+  check_link
+  mkdir -p "$CFG_DIR"
+  write_save
+  ln -sfn "$SAVE" "$CFG"
+  reload
+  sync
+  notify on
+  say SAVE
+}
+
+save_off() {
+  check_link
+  ln -sfn "$NORMAL" "$CFG"
+  reload
+  sync
+  notify off
+  say NORM
+}
+
+case "${1:-toggle}" in
+  on) save_on ;;
+  off) save_off ;;
+  toggle)
+    if is_save; then save_off; else save_on; fi
+    ;;
+  sync) sync ;;
+  status)
+    is_save && say SAVE
+    ;;
+  *)
+    say "usage: $(basename "$0") [on|off|toggle|sync|status]" >&2
+    exit 2
+    ;;
+esac

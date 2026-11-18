@@ -1,4 +1,14 @@
 CONFIG_PATH=`pwd`
+
+# jq generates the OpenCode save-mode profile (opencode/oc-mode)
+if command -v brew >/dev/null 2>&1; then
+  brew list --formula jq >/dev/null 2>&1 || brew install jq
+fi
+if ! command -v jq >/dev/null 2>&1; then
+  echo "error: jq is required by opencode/oc-mode" >&2
+  exit 1
+fi
+
 mkdir -p ~/.config/nvim/
 ln -sf $CONFIG_PATH/init.vim ~/.config/nvim/init.vim
 ln -sf $CONFIG_PATH/.zshrc ~/.zshrc
@@ -10,8 +20,11 @@ ln -sf $CONFIG_PATH/konsole ~/.local/share/konsole
 ln -sf $CONFIG_PATH/ssh_config ~/.ssh/config
 ln -sf $CONFIG_PATH/.prettierrc ~/.prettierrc
 mkdir -p ~/.config/opencode
-ln -sf $CONFIG_PATH/opencode.json ~/.config/opencode/opencode.json
+ln -sf $CONFIG_PATH/opencode/opencode.json ~/.config/opencode/opencode.json
+ln -sf $CONFIG_PATH/opencode/AGENTS.md ~/.config/opencode/AGENTS.md
 ln -sf $CONFIG_PATH/opencode-tui.json ~/.config/opencode/cli.json
+# Resetting the config also resets the tmux "SAVE" indicator
+sh $CONFIG_PATH/opencode/oc-mode sync 2>/dev/null || true
 mkdir -p ~/.config/cliamp
 ln -sf $CONFIG_PATH/cliamp.toml ~/.config/cliamp/config.toml
 [ -L ~/.config/zsh ] && rm ~/.config/zsh
