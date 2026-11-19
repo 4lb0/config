@@ -9,8 +9,9 @@ if ! command -v jq >/dev/null 2>&1; then
   exit 1
 fi
 
-mkdir -p ~/.config/nvim/
+mkdir -p ~/.config/nvim/plugin
 ln -sf $CONFIG_PATH/init.vim ~/.config/nvim/init.vim
+ln -sf $CONFIG_PATH/mapping-tips.lua ~/.config/nvim/plugin/mapping-tips.lua
 ln -sf $CONFIG_PATH/.zshrc ~/.zshrc
 ln -sf $CONFIG_PATH/.gitconfig ~/.gitconfig
 ln -sf $CONFIG_PATH/.tmux.conf ~/.tmux.conf
