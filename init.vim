@@ -177,7 +177,8 @@ set wildmenu  " visual autocomplete for command menu
 augroup user_filetypes
   autocmd!
   " .tsx must become typescriptreact, otherwise JSX is lost
-  autocmd BufNewFile,BufRead *.ts,*.tsx setlocal filetype=typescriptreact
+  autocmd BufNewFile,BufRead *.ts  setlocal filetype=typescript
+  autocmd BufNewFile,BufRead *.tsx setlocal filetype=typescriptreact
   autocmd BufNewFile,BufRead *.php,*.java,*.c setlocal shiftwidth=4 tabstop=4
   autocmd BufNewFile,BufRead *.h setlocal filetype=c
   autocmd BufNewFile,BufRead *.asm setlocal filetype=nasm
