@@ -18,3 +18,18 @@
 - No push on main or common branches (dev, qa, beta, prod) without an explicit
   request. Push directly when working on feature branches. If the repo has
   tests, run them before committing.
+
+## Subagents
+
+- **Delegate by default.** Prefer spawning a subagent over doing the work in the
+  main session: `explore` to find and read code, `general` for research and
+  multi-step work, `operative-runner` for well-specified mechanical changes
+  (edits, refactors, scripts, bulk changes).
+- Launch independent chunks in parallel instead of one long serial run. Keep in
+  the main session only what needs the user: planning, decisions, trade-offs and
+  the final review.
+- Write self-contained prompts. A subagent starts with a fresh context, so give
+  it the paths, the goal, the constraints and how to verify the result — not "as
+  discussed above".
+- The main session owns the diff: review what the subagent returns before
+  committing, and never let it commit or push unless explicitly asked.
