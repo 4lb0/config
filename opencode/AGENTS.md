@@ -11,6 +11,10 @@
   something is broken or there is a change, **amend** only if the commit has not
   been pushed yet; if it is already on the remote, add a new fix commit. Never
   force-push.
+- **`git fetch` before any amend or rebase.** Never trust an `[ahead N]` seen
+  earlier in the session: the remote may have moved and amending would rewrite
+  commits that are already published. Fetch, compare with the upstream branch,
+  and only then choose between amend and a new commit.
 - No push on main or common branches (dev, qa, beta, prod) without an explicit
   request. Push directly when working on feature branches. If the repo has
   tests, run them before committing.
