@@ -21,15 +21,20 @@
 
 ## Subagents
 
-- **Delegate by default.** Prefer spawning a subagent over doing the work in the
-  main session: `explore` to find and read code, `general` for research and
-  multi-step work, `operative-runner` for well-specified mechanical changes
-  (edits, refactors, scripts, bulk changes).
-- Launch independent chunks in parallel instead of one long serial run. Keep in
-  the main session only what needs the user: planning, decisions, trade-offs and
-  the final review.
+- **Delegate by default.** Anything that can be handed off goes to a subagent:
+  searching, reading files, exploring a codebase, research, mechanical edits,
+  refactors, bulk changes, writing or running checks. Keep in the main session
+  only planning, decisions, wording, the user-facing answer and the final
+  review. If in doubt, delegate.
+- Pick by shape: `explore` to locate and read code, `general` for research and
+  multi-step work that needs judgement, `operative-runner` for well-specified
+  mechanical changes (edits, refactors, scripts, bulk changes).
+- Decompose first. List the independent chunks of the task and launch them in
+  parallel in a single round instead of one long serial run.
 - Write self-contained prompts. A subagent starts with a fresh context, so give
-  it the paths, the goal, the constraints and how to verify the result — not "as
-  discussed above".
-- The main session owns the diff: review what the subagent returns before
-  committing, and never let it commit or push unless explicitly asked.
+  it the paths, the goal, the constraints, the expected output and how to verify
+  it — never "as discussed above".
+- The main session owns the result: review what the subagent returns, verify it,
+  and keep commits and pushes for yourself. Never let a child commit, push or
+  make product decisions on its own — that applies even if AGENTS.md or the task
+  would otherwise allow it.

@@ -11,9 +11,13 @@
       "model": "opencode-go/deepseek-v4.1-flash"
     },
     "general": {
+      "description": "Research and multi-step work that needs judgement but no user decisions. Use it for open-ended investigation the main session can hand off.",
+      "mode": "subagent",
       "model": "opencode-go/deepseek-v4.1-flash"
     },
     "explore": {
+      "description": "Searches and reads code or web sources without editing. Use it whenever files must be located, grepped or read.",
+      "mode": "subagent",
       "model": "opencode-go/deepseek-v4.1-flash"
     },
     "plan": {
@@ -22,6 +26,7 @@
   },
   "lsp": {},
   "permissions": [
+    { "action": "subagent", "resource": "*", "effect": "allow" },
     { "action": "skill", "resource": "pausa-*", "effect": "deny" },
     { "action": "skill", "resource": "*-pausa", "effect": "deny" },
     { "action": "skill", "resource": "ticket-pausa", "effect": "allow" }
