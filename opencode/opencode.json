@@ -27,6 +27,8 @@
   "lsp": {},
   "permissions": [
     { "action": "subagent", "resource": "*", "effect": "allow" },
+    { "action": "external_directory", "resource": "/private/var/folders/*/*/T", "effect": "allow" },
+    { "action": "external_directory", "resource": "/private/var/folders/*/*/T/*", "effect": "allow" },
     { "action": "skill", "resource": "pausa-*", "effect": "deny" },
     { "action": "skill", "resource": "*-pausa", "effect": "deny" },
     { "action": "skill", "resource": "ticket-pausa", "effect": "allow" }
@@ -80,7 +82,11 @@
     "external_directory": {
       "*": "ask",
       "/tmp": "allow",
-      "/tmp/*": "allow"
+      "/tmp/*": "allow",
+      "/var/folders/*/*/T": "allow",
+      "/var/folders/*/*/T/*": "allow",
+      "/private/var/folders/*/*/T": "allow",
+      "/private/var/folders/*/*/T/*": "allow"
     }
   },
   "plugins": [
