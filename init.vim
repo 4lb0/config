@@ -273,3 +273,22 @@ function! s:CloseBuffer(force) abort
 endfunction
 
 nnoremap <leader><leader> <Cmd>CocCommand<CR>
+
+" C-Space in normal mode: the same agent session picker tmux opens elsewhere.
+" tmux hands C-Space back to Vim/Neovim, and insert mode keeps coc#refresh.
+nnoremap <silent> <C-Space> :call <SID>OpenAgentPicker()<CR>
+
+function! s:OpenAgentPicker() abort
+  if empty($TMUX) || !executable('tmux')
+    echom 'The agent picker needs tmux'
+    return
+  endif
+  " jobstart so the editor is not blocked while the popup is open
+  try
+    call jobstart(['tmux', 'display-popup', '-E', '-b', 'rounded',
+          \ '-w', '90%', '-h', '60%', '-T', 'agents',
+          \ expand('~/bin/sessions-ls')])
+  catch
+    echom 'Could not open the agent picker: ' . v:exception
+  endtry
+endfunction
