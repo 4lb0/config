@@ -32,7 +32,7 @@ import unicodedata
 from datetime import datetime, timezone
 from dataclasses import dataclass
 
-VERSION = "0.3.0"
+VERSION = "0.4.0"
 
 HOME = os.path.expanduser("~")
 OPENCODE_DB = os.environ.get(
@@ -141,6 +141,7 @@ class Proc:
     pid: int
     ppid: int
     argv: list[str]
+    started: float = 0.0
 
 
 # --------------------------------------------------------------------------
@@ -181,17 +182,26 @@ def pane_prompt(pane_id: str) -> str:
 # processes
 # --------------------------------------------------------------------------
 
+def parse_ps_time(text: str) -> float:
+    """Epoch for a ``ps -o lstart`` value (local time)."""
+    try:
+        return time.mktime(time.strptime(text, "%a %b %d %H:%M:%S %Y"))
+    except (ValueError, OverflowError):
+        return 0.0
+
+
 def list_processes() -> dict[int, Proc]:
     procs: dict[int, Proc] = {}
-    for line in run(["ps", "-eo", "pid=,ppid=,command="]).splitlines():
-        parts = line.strip().split(None, 2)
-        if len(parts) < 3:
+    for line in run(["ps", "-eo", "pid=,ppid=,lstart=,command="]).splitlines():
+        parts = line.strip().split(None, 7)
+        if len(parts) < 8:
             continue
         try:
             pid, ppid = int(parts[0]), int(parts[1])
         except ValueError:
             continue
-        procs[pid] = Proc(pid=pid, ppid=ppid, argv=parts[2].split())
+        procs[pid] = Proc(pid=pid, ppid=ppid, argv=parts[7].split(),
+                          started=parse_ps_time(" ".join(parts[2:7])))
     return procs
 
 
@@ -307,15 +317,34 @@ class OpenCodeIndex:
         if conn is None:
             return
         try:
+            # Roots plus their whole subtree: a session whose subagent is
+            # still running is working even if the root turn is idle.
             rows = conn.execute(
                 """
-                SELECT id, title, directory, time_updated, time_busy, time_idle,
-                       idle_outcome, time_viewed, parent_id
-                FROM session_v2
-                WHERE parent_id IS NULL
-                  AND time_archived IS NULL
-                ORDER BY time_updated DESC
-                LIMIT 500
+                WITH RECURSIVE roots AS (
+                    SELECT id, title, slug, directory, time_created,
+                           time_updated, time_busy, time_idle, idle_outcome,
+                           time_viewed, parent_id
+                    FROM session_v2
+                    WHERE parent_id IS NULL AND time_archived IS NULL
+                    ORDER BY time_updated DESC
+                    LIMIT 500
+                ), tree(root_id, id, parent_id, title, slug, directory,
+                        time_created, time_updated, time_busy, time_idle,
+                        idle_outcome, time_viewed) AS (
+                    SELECT id, id, parent_id, title, slug, directory,
+                           time_created, time_updated, time_busy, time_idle,
+                           idle_outcome, time_viewed
+                    FROM roots
+                    UNION ALL
+                    SELECT tree.root_id, s.id, s.parent_id, s.title, s.slug,
+                           s.directory, s.time_created, s.time_updated,
+                           s.time_busy, s.time_idle, s.idle_outcome,
+                           s.time_viewed
+                    FROM session_v2 s JOIN tree ON s.parent_id = tree.id
+                    WHERE s.time_archived IS NULL
+                )
+                SELECT * FROM tree
                 """
             ).fetchall()
         except sqlite3.Error:
@@ -323,9 +352,10 @@ class OpenCodeIndex:
             try:
                 rows = conn.execute(
                     """
-                    SELECT id, title, directory, time_updated, NULL AS time_busy,
+                    SELECT id AS root_id, id, parent_id, title, slug, directory,
+                           time_created, time_updated, NULL AS time_busy,
                            NULL AS time_idle, NULL AS idle_outcome,
-                           NULL AS time_viewed, parent_id
+                           NULL AS time_viewed
                     FROM session
                     WHERE parent_id IS NULL AND time_archived IS NULL
                     ORDER BY time_updated DESC LIMIT 500
@@ -333,42 +363,38 @@ class OpenCodeIndex:
                 ).fetchall()
             except sqlite3.Error:
                 return
-        self.sessions = [dict(r) for r in rows]
-        self.loaded_at = time.time()
 
-    def find(self, directory: str, title_hint: str) -> tuple[dict | None, bool]:
-        """Return (session, confirmed)."""
-        if not self.sessions:
-            return None, False
+        now = time.time()
+        roots: list[dict] = []
+        children: dict[str, list[dict]] = {}
+        for row in rows:
+            entry = dict(row)
+            root_id = entry.pop("root_id", entry["id"])
+            if root_id == entry["id"]:
+                roots.append(entry)
+            else:
+                children.setdefault(root_id, []).append(entry)
+        for root in roots:
+            family = [root, *children.get(root["id"], [])]
+            root["status"] = (
+                "working"
+                if any(opencode_status(s, now) == "working" for s in family)
+                else "awaiting"
+            )
+            root["activity"] = max(opencode_activity(s) for s in family)
+            root["created"] = (root.get("time_created") or 0) / 1000.0
+        self.sessions = roots
+        self.loaded_at = now
+
+    def local(self, directory: str) -> list[dict]:
+        """Top level sessions started in *directory*, most recently used first."""
         directory = os.path.normpath(directory)
-        local = [s for s in self.sessions
-                 if os.path.normpath(s.get("directory") or "") == directory]
+        hits = [s for s in self.sessions
+                if os.path.normpath(s.get("directory") or "") == directory]
+        hits.sort(key=lambda s: (s.get("time_viewed") or 0,
+                                 s.get("time_updated") or 0), reverse=True)
+        return hits
 
-        if title_hint:
-            hint = norm(title_hint)
-            truncated = title_hint.rstrip().endswith(("…", "..."))
-            if truncated:
-                hint = norm(title_hint.rstrip().rstrip(".…"))
-
-            def matches(s: dict) -> bool:
-                t = norm(s.get("title") or "")
-                if not t:
-                    return False
-                return t.startswith(hint) if truncated else t == hint
-
-            for pool in (local, self.sessions):
-                hits = [s for s in pool if matches(s)]
-                if hits:
-                    hits.sort(key=lambda s: (s.get("time_viewed") or 0,
-                                             s.get("time_updated") or 0),
-                              reverse=True)
-                    return hits[0], True
-
-        if local:
-            local.sort(key=lambda s: (s.get("time_viewed") or 0,
-                                      s.get("time_updated") or 0), reverse=True)
-            return local[0], False
-        return None, False
 
 
 def opencode_status(s: dict, now: float) -> str:
@@ -457,32 +483,35 @@ class ClaudeIndex:
             if not title and etype == "ai-title":
                 title = entry.get("aiTitle") or ""
                 continue
+            if status:
+                # Keep walking back only to find the title: it is usually
+                # written before the latest turn entry.
+                continue
             if etype in SKIP_TYPES:
                 continue
             if etype == "assistant":
                 stop = (entry.get("message") or {}).get("stop_reason")
                 status = "working" if stop in (None, "tool_use") else "awaiting"
-                break
-            if etype == "user":
+            elif etype == "user":
                 status = "working"
-                break
-            if etype == "system":
+            elif etype == "system":
                 sub = entry.get("subtype")
                 status = "working" if sub in ("compact_boundary",) else "awaiting"
-                break
-            if etype in ("progress", "tool_result", "tool_use"):
+            elif etype in ("progress", "tool_result", "tool_use"):
                 status = "working"
-                break
             # Anything else (plugin bookkeeping, ledger entries…) is ignored.
-            continue
 
         if not status:
             status = "working" if time.time() - st.st_mtime < 90 else "awaiting"
+        elif status == "working" and time.time() - activity > 2 * 3600:
+            # A "working" flag left behind by a killed or abandoned turn.
+            status = "awaiting"
 
         data = {
             "title": title,
             "status": status,
             "activity": activity,
+            "created": getattr(st, "st_birthtime", 0.0) or st.st_mtime,
             "mtime": st.st_mtime,
             "size": st.st_size,
             "id": os.path.basename(path).removesuffix(".jsonl"),
@@ -504,28 +533,17 @@ class ClaudeIndex:
                 out.append((p, info))
         return out
 
-    def find(self, directory: str, title_hint: str) -> tuple[dict | None, bool]:
-        project = claude_project_dir(directory)
-        if not project:
-            return None, False
-        entries = self.recent(project)
-        if not entries:
-            return None, False
-
-        if title_hint:
-            hint = norm(title_hint)
-            truncated = title_hint.rstrip().endswith(("…", "..."))
-            if truncated:
-                hint = norm(title_hint.rstrip().rstrip(".…"))
-            for path, info in entries:
-                t = norm(info["title"])
-                if not t:
-                    continue
-                if (t.startswith(hint) if truncated else t == hint):
-                    return info, True
-
-        path, info = entries[0]
-        return info, False
+    def candidates(self, project_dir: str) -> list[dict]:
+        return [
+            {
+                "id": info["id"],
+                "title": info.get("title") or "",
+                "status": info.get("status") or "awaiting",
+                "activity": info.get("activity") or 0.0,
+                "created": info.get("created") or 0.0,
+            }
+            for _path, info in self.recent(project_dir)
+        ]
 
 
 def stat_mtime(path: str) -> float:
@@ -547,49 +565,159 @@ def parse_iso(ts: str) -> float:
 # collection
 # --------------------------------------------------------------------------
 
+def pane_hint(kind: str, title: str) -> str:
+    """Session title advertised by the pane title, or "" when it has none."""
+    title = title or ""
+    if kind == "opencode":
+        for prefix in ("OC | ", "OC |"):
+            if title.startswith(prefix):
+                return title[len(prefix):].strip()
+        return ""
+    hint = re.sub(r"^[^\w]+", "", title).strip()
+    return "" if hint in ("", "Claude Code") else hint
+
+
+def hint_matches(title: str, hint: str) -> bool:
+    title = norm(title)
+    if not title:
+        return False
+    if hint.rstrip().endswith(("…", "...")):
+        return title.startswith(norm(hint.rstrip().rstrip(".…")))
+    return title == norm(hint)
+
+
+def session_arg(proc: Proc, kind: str) -> str:
+    """Session id passed explicitly on the agent command line."""
+    flags = ("-s", "--session") if kind == "opencode" else \
+        ("-r", "--resume", "--session-id")
+    argv = proc.argv[1:]
+    for i, arg in enumerate(argv):
+        for flag in flags:
+            if (arg == flag and i + 1 < len(argv)
+                    and not argv[i + 1].startswith("-")):
+                return argv[i + 1]
+            if arg.startswith(flag + "="):
+                return arg[len(flag) + 1:]
+    return ""
+
+
+def match_group(members: list[tuple[Pane, Proc]], kind: str,
+                local: list[dict], everything: list[dict],
+                used: set[str] | None = None
+                ) -> dict[str, tuple[dict | None, bool]]:
+    """Pair panes with sessions, never handing out the same session twice.
+
+    Strong signals first (``-s``/``--resume`` on the command line, then the
+    title in the pane title); panes left without a title get a session created
+    after their agent process started, so a brand new session in a directory
+    does not inherit the name and status of an older one.
+    """
+    out: dict[str, tuple[dict | None, bool]] = {}
+    used = used if used is not None else set()
+    pending: list[tuple[Pane, Proc]] = []
+    for pane, proc in members:
+        sid = session_arg(proc, kind)
+        hit = next((c for c in everything if sid and c["id"] == sid), None)
+        if hit is not None and hit["id"] not in used:
+            out[pane.pane_id] = (hit, True)
+            used.add(hit["id"])
+        else:
+            pending.append((pane, proc))
+
+    unmatched: list[tuple[Pane, Proc, str]] = []
+    for pane, proc in pending:
+        hint = pane_hint(kind, pane.title)
+        hit = None
+        if hint:
+            for pool in (local, everything):
+                hit = next((c for c in pool
+                            if c["id"] not in used
+                            and hint_matches(c.get("title") or "", hint)), None)
+                if hit is not None:
+                    break
+        if hit is not None:
+            out[pane.pane_id] = (hit, True)
+            used.add(hit["id"])
+        else:
+            unmatched.append((pane, proc, hint))
+
+    # Untitled panes: the session must have been created after the agent was
+    # launched, otherwise it belongs to some other pane (or to the past).
+    pairs = []
+    for pane, proc, hint in unmatched:
+        if hint or not proc.started:
+            continue
+        for cand in local:
+            created = cand.get("created") or 0
+            if cand["id"] in used or not created:
+                continue
+            if created < proc.started - 5:
+                continue
+            pairs.append((abs(created - proc.started), pane.pane_id, cand))
+    pairs.sort(key=lambda p: p[0])
+    for _delta, pane_id, cand in pairs:
+        if pane_id in out or cand["id"] in used:
+            continue
+        out[pane_id] = (cand, False)
+        used.add(cand["id"])
+
+    # A title that did not match the index (renamed, or the database lagged):
+    # keep showing the newest free session in that directory.
+    for pane, _proc, hint in unmatched:
+        if pane.pane_id in out or not hint:
+            continue
+        rest = [c for c in local if c["id"] not in used]
+        if rest:
+            out[pane.pane_id] = (rest[0], False)
+            used.add(rest[0]["id"])
+
+    for pane, _proc, _hint in unmatched:
+        out.setdefault(pane.pane_id, (None, False))
+    return out
+
+
 def collect(opencode: OpenCodeIndex, claude: ClaudeIndex) -> list[Agent]:
     opencode.refresh()
-    agents: list[Agent] = []
+    panes = agents_in_panes(list_panes())
 
-    for pane, kind, _proc in agents_in_panes(list_panes()):
-        title = pane.title or ""
-        pdir = pane.path or os.getcwd()
-        hint = ""
+    groups: dict[tuple[str, str], list[tuple[Pane, Proc]]] = {}
+    for pane, kind, proc in panes:
+        groups.setdefault((kind, os.path.normpath(pane.path or os.getcwd())),
+                          []).append((pane, proc))
 
+    matched: dict[str, tuple[dict | None, bool]] = {}
+    claimed: set[str] = set()
+    for (kind, directory), members in groups.items():
         if kind == "opencode":
-            if title.startswith("OC | "):
-                hint = title[len("OC | "):]
-            elif title.startswith("OC |"):
-                hint = title[len("OC |"):].lstrip()
-            session, confirmed = opencode.find(pdir, hint)
-            if session:
-                name = session.get("title") or hint or os.path.basename(pdir)
-                status = opencode_status(session, time.time())
-                activity = opencode_activity(session)
-                sid = session.get("id") or ""
-            else:
-                name = hint or os.path.basename(pdir)
-                status = "unknown"
-                activity = stat_mtime(pdir)
-                sid = ""
-        else:  # claude
-            hint = re.sub(r"^[^\w]+", "", title).strip()
-            info, confirmed = claude.find(pdir, hint)
-            if info:
-                name = info.get("title") or hint or os.path.basename(pdir)
-                status = info.get("status", "awaiting")
-                activity = info.get("activity") or stat_mtime(pdir)
-                sid = info.get("id", "")
-            else:
-                name = hint or os.path.basename(pdir)
-                status = "unknown"
-                activity = stat_mtime(pdir)
-                sid = ""
+            local = opencode.local(directory)
+            matched.update(match_group(members, kind, local, opencode.sessions,
+                                       claimed))
+        else:
+            project = claude_project_dir(directory)
+            local = claude.candidates(project) if project else []
+            matched.update(match_group(members, kind, local, local, claimed))
+
+    agents: list[Agent] = []
+    for pane, kind, proc in panes:
+        pdir = pane.path or os.getcwd()
+        hint = pane_hint(kind, pane.title)
+        session, confirmed = matched.get(pane.pane_id, (None, False))
+
+        if session is not None:
+            name = (session.get("title") or hint or session.get("slug")
+                    or "new session")
+            status = session.get("status") or "awaiting"
+            activity = session.get("activity") or 0.0
+            sid = session.get("id") or ""
+        else:
+            name = hint or "new session"
+            status = "unknown"
+            activity = proc.started or stat_mtime(pdir)
+            sid = ""
 
         agents.append(Agent(
-            pane=pane, kind=kind, name=name or os.path.basename(pdir),
-            status=status, activity=activity, session_id=sid,
-            confirmed=confirmed,
+            pane=pane, kind=kind, name=name, status=status,
+            activity=activity, session_id=sid, confirmed=confirmed,
         ))
 
     # Interactive dialogs outrank "working"/"unknown": a visible permission
