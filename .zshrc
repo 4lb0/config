@@ -63,6 +63,16 @@ fi
 # Disable docker-compose suggestion https://github.com/docker/scan-cli-plugin/issues/149
 export DOCKER_SCAN_SUGGEST=false
 
+# Telemetry opt-out (tools installed here: claude, next, turbo, vercel, brew).
+# Do NOT set DO_NOT_TRACK / DISABLE_TELEMETRY / DISABLE_NONESSENTIAL_TRAFFIC:
+# Claude Code maps them to "no-telemetry", which also stops fetching the
+# feature flags Remote Control depends on.
+export DISABLE_ERROR_REPORTING=1         # Claude Code (Sentry only)
+export NEXT_TELEMETRY_DISABLED=1         # Next.js
+export TURBO_TELEMETRY_DISABLED=1        # Turborepo
+export VERCEL_TELEMETRY_DISABLED=1       # Vercel CLI
+export HOMEBREW_NO_ANALYTICS=1           # Homebrew
+
 # Improve default
 alias ag="ag --ignore \"*.bundle\" --ignore \"*.sql\" -i --color"
 alias less="less -r"
