@@ -1,4 +1,10 @@
 #!/bin/sh
+# ARCHIVED: opencode.json now runs every agent on deepseek-flash, so switching
+# between profiles is no longer needed. Kept here in case the glm-5.3 split
+# comes back. To restore it:
+#   git mv deprecated/oc-mode opencode/oc-mode
+# then re-add the install.sh link/sync lines and the .tmux.conf binding.
+#
 # OpenCode "save mode": run every agent that has a model on deepseek-flash,
 # instead of the more expensive glm-5.3 used by build/plan.
 #
