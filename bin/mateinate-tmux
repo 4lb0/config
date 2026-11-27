@@ -1,0 +1,43 @@
+#!/bin/sh
+# mateinate-tmux — tmux status segment for mateinate: 🧉 on the dracula
+# yellow while the mateinate daemon is running.
+#
+#   mateinate-tmux         print the styled segment, or nothing when off
+#   mateinate-tmux sync    put the segment at the start of tmux status-right
+#
+# The segment is a tmux `#()` command, so the status bar re-runs it on every
+# refresh and the emoji appears and goes away on its own.
+#
+# Same signal as `mateinate status` -> "daemon : running": the pid in
+# daemon.pid is alive.
+set -u
+
+STATE="${MATEINATE_STATE:-$HOME/Library/Application Support/mateinate}"
+SELF="$HOME/config/bin/mateinate-tmux"
+SEG='#[fg=#282a36,bg=#f1fa8c,bold] 🧉 '
+MARK="#($SELF)"
+
+active() {
+  pid=$(cat "$STATE/daemon.pid" 2>/dev/null) || pid=""
+  [ -n "$pid" ] && kill -0 "$pid" 2>/dev/null
+}
+
+sync() {
+  command -v tmux >/dev/null 2>&1 || return 0
+  current=$(tmux show -gv status-right 2>/dev/null) || return 0
+  # Drop a previous copy so a config reload never stacks two segments.
+  case "$current" in
+    "$MARK"*) current=${current#"$MARK"} ;;
+  esac
+  tmux set -g status-right "$MARK$current" >/dev/null 2>&1 || true
+  tmux refresh-client -S >/dev/null 2>&1 || true
+}
+
+case "${1:-}" in
+  "") active && printf '%s' "$SEG" ;;
+  sync) sync ;;
+  *)
+    printf 'usage: %s [sync]\n' "$(basename "$0")" >&2
+    exit 2
+    ;;
+esac
