@@ -5,8 +5,8 @@ Shows every opencode / claude process that owns a tmux pane, with its session
 name, its status (working / awaiting / approval) and where it lives.
 
 Interactive picker (when stdout and stdin are a TTY): arrows/jk to move,
-/ to search (fzf when installed), Enter to jump to that pane, q to quit.
-The list refreshes itself every second.
+1-9 and 0 to jump straight to one of the first ten rows, / to filter,
+Enter to jump to that pane, q to quit. The list refreshes itself every second.
 
 In a pipeline (or with --plain) it prints an ``ls -lht``-ish listing sorted by
 most recently active, one row per agent, and exits.
@@ -32,7 +32,7 @@ import unicodedata
 from datetime import datetime, timezone
 from dataclasses import dataclass
 
-VERSION = "0.4.0"
+VERSION = "0.5.0"
 
 HOME = os.path.expanduser("~")
 OPENCODE_DB = os.environ.get(
@@ -44,6 +44,18 @@ CLAUDE_PROJECTS = os.environ.get(
 
 SEP = "\x1f"
 SPINNER = "⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏"
+
+# Shortcuts for the first ten rows: 1-9 and 0 for the tenth.
+HOTKEYS = "1234567890"
+
+# Used when the terminal is too narrow for the full status word.
+STATUS_SHORT = {
+    "working": "wor",
+    "awaiting": "awa",
+    "question": "ask",
+    "approval": "app",
+    "unknown": "unk",
+}
 
 # Subcommands / flags that mean "not an interactive TUI".
 OPENCODE_NON_TUI = {
@@ -974,8 +986,6 @@ class Picker:
         self.selected_pane = self.agents[0].pane.pane_id if self.agents else ""
 
     def start_search(self) -> None:
-        if shutil.which("fzf") and self.fzf_search():
-            return
         self.pane_before_search = (
             self.agents[self.cursor].pane.pane_id if self.agents else ""
         )
@@ -992,38 +1002,6 @@ class Picker:
                     break
         if self.agents:
             self.selected_pane = self.agents[self.cursor].pane.pane_id
-
-    def fzf_search(self) -> bool:
-        """Hand the current list to fzf; return whether fzf ran at all."""
-        if not self.agents:
-            return True
-        rows = [
-            f"{i}\t{a.kind}  {a.status}  {a.pane.target}  {a.name}  "
-            f"{short_path(a.pane.path)}"
-            for i, a in enumerate(self.agents)
-        ]
-        self.leave()
-        try:
-            proc = subprocess.run(
-                ["fzf", "--ignore-case", "--no-multi", "--delimiter=\t",
-                 "--with-nth=2..", "--prompt=agents> "],
-                input="\n".join(rows) + ("\n" if rows else ""),
-                capture_output=True, text=True,
-            )
-        except OSError:
-            return False
-        finally:
-            self.enter()
-        if proc.returncode != 0 or not proc.stdout.strip():
-            return True  # cancelled: keep the normal list
-        try:
-            index = int(proc.stdout.split("\t", 1)[0])
-        except ValueError:
-            return True
-        if 0 <= index < len(self.agents):
-            self.cursor = index
-            self.selected_pane = self.agents[index].pane.pane_id
-        return True
 
     # -- drawing -------------------------------------------------------
     def paint(self, text: str, code: str) -> str:
@@ -1076,16 +1054,20 @@ class Picker:
         rule = self.paint("─" * budget, DIM)
         lines.append(rule)
 
-        # Fixed columns take 41 cells (32 without the agent name, 28 without
-        # the age either); give the session name a readable cap and let the
-        # path use whatever is left.
-        if budget >= 64:
-            base, show_kind, show_age = 41, True, True
-        elif budget >= 48:
-            base, show_kind, show_age = 32, False, True
+        # Fixed columns: hotkey, cursor, status glyph and status, then the
+        # agent kind and age when there is room. On a narrow terminal the
+        # status is abbreviated (working -> wor) instead of being cut in the
+        # middle, and the kind/age columns go first.
+        if budget >= 66:
+            show_kind, show_age, status_w = True, True, 8
+        elif budget >= 50:
+            show_kind, show_age, status_w = False, True, 3
         else:
-            base, show_kind, show_age = 28, False, False
-        name_w = max(6, min(44, budget - base - 12))
+            show_kind, show_age, status_w = False, False, 3
+        target_w = 12 if budget >= 50 else 10
+        base = 7 + status_w + (9 if show_kind else 0) + (5 if show_age else 0) \
+            + target_w + 2
+        name_w = max(6, min(40, budget - base - 12))
         visible = max(1, height - 5)
         if len(self.agents) > visible:
             start = max(0, min(self.cursor - visible // 2,
@@ -1097,6 +1079,7 @@ class Picker:
         for i, a in enumerate(window):
             idx = start + i
             selected = idx == self.cursor
+            hot = HOTKEYS[idx] if idx < len(HOTKEYS) else " "
             mark = "❯" if selected else " "
             if a.status == "working":
                 glyph = SPINNER[self.frame % len(SPINNER)]
@@ -1109,16 +1092,19 @@ class Picker:
             else:
                 glyph = "?"
 
-            status = a.status.ljust(8)
+            label = a.status if status_w >= 8 else \
+                STATUS_SHORT.get(a.status, a.status[:status_w])
+            status = pad(label, status_w)
             if self.color:
                 status = STATUS_COLORS.get(a.status, "") + status + RESET
             kind = a.kind.ljust(8)
             age = human_age(a.activity, now).rjust(4)
-            target = pad(truncate(a.pane.target, 12), 12)
+            target = pad(truncate(a.pane.target, target_w), target_w)
             name = pad(truncate(a.name, name_w), name_w)
             path = short_path(a.pane.path)
 
-            line = f" {mark} {glyph} {status}"
+            hot_text = hot if selected or hot == " " else self.paint(hot, DIM)
+            line = f" {hot_text} {mark} {glyph} {status}"
             if show_kind:
                 line += f" {kind}"
             if show_age:
@@ -1145,18 +1131,31 @@ class Picker:
         lines.append(rule)
         if self.searching:
             label = f"  /{self.query}"
-            tail = "   ⏎ jump   esc cancel   ⌫ erase"
-            if cell_width(label) + cell_width(tail) > budget:
+            full = "   1-0 pick   ⏎ jump   esc cancel   ⌫ erase"
+            short = "   ⏎ jump   esc cancel"
+            if cell_width(label) + cell_width(full) <= budget:
+                tail = full
+            elif cell_width(label) + cell_width(short) <= budget:
+                tail = short
+            else:
                 tail = ""
             if cell_width(label) > budget:
                 label = "  /" + truncate_left(self.query, budget - 3)
             lines.append(self.paint(label, BOLD) + self.paint(tail, DIM))
         else:
             target = self.agents[self.cursor].pane.target if self.agents else ""
-            hint = f"  ↑↓/jk move   ⏎ jump{f' to {target}' if target else ''}   " \
-                   "/ search   g/G top/bottom   r resort   q quit"
-            if cell_width(hint) > budget:
-                hint = "  ↑↓/jk move   ⏎ jump   / search   g/G   r   q quit"
+            jump = f"⏎ jump{f' to {target}' if target else ''}"
+            hints = (
+                f"  ↑↓/jk move   {jump}   1-0 pick   / search   "
+                f"g/G top/bottom   r resort   q quit",
+                f"  ↑↓/jk move   {jump}   1-0 pick   / search   g/G   r   q quit",
+                "  ↑↓/jk  ⏎ jump  1-0  / search  q quit",
+            )
+            hint = hints[-1]
+            for candidate in hints:
+                if cell_width(candidate) <= budget:
+                    hint = candidate
+                    break
             lines.append(truncate(hint, budget))
 
         # Pad every row to the last usable column: a row that shrinks must
@@ -1256,6 +1255,15 @@ class Picker:
                             self.edit_search(self.query[:-1])
                         elif key == "\x15":  # C-u
                             self.edit_search("")
+                        elif key in HOTKEYS and HOTKEYS.index(key) < len(self.agents):
+                            # The number follows the filtered list: 3 jumps to
+                            # the third row of what is on screen right now.
+                            self.cursor = HOTKEYS.index(key)
+                            target = self.agents[self.cursor]
+                            self.searching = False
+                            self.query = ""
+                            jump = True
+                            break
                         elif len(key) == 1 and key >= " ":
                             self.edit_search(self.query + key)
                         continue
@@ -1267,6 +1275,11 @@ class Picker:
                         continue
                     if not self.agents:
                         continue
+                    if key in HOTKEYS and HOTKEYS.index(key) < len(self.agents):
+                        self.cursor = HOTKEYS.index(key)
+                        target = self.agents[self.cursor]
+                        jump = True
+                        break
                     if key in ("up", "k"):
                         self.cursor = (self.cursor - 1) % len(self.agents)
                     elif key in ("down", "j"):
